@@ -1,0 +1,1570 @@
+---
+title: 'Riesgo Liquidez'
+author: "Equipo 2"
+date: "2025-03-13"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE)
+```
+
+# Carga de datos
+
+Cargamos las paqueterías necesarias
+
+```{r}
+# Paqueterías y librerías para las APIs de BANXICO
+#install.packages("siebanxicor") # Proporcionado por BANXICO
+
+library(siebanxicor)
+library(ggplot2)
+library(tseries)
+library(forecast)
+
+# Paqueterías y librerías para las APIs del INEGI
+#install.packages("httr")      # Para hacer peticiones HTTP
+#install.packages("jsonlite")  # Para leer respuestas JSON
+#install.packages("dplyr")     # Para manipular datos
+
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+# Paqueterías y ibrerías restantes
+library(readxl)
+library(glmnet)
+library(Metrics)
+library(knitr)
+library(kableExtra)
+library(tidyr)
+```
+
+
+## Series de BANXICO
+
+**Descarga y/o actualización del catálagos de series**
+
+```{r}
+# Claves de las APIs
+ID_Series <- c("SF282", "SF18561", "SL11298", "SL138", "SR17693") # Se agregan o eliminan las APIs
+
+Nombre_Serie <- c("TasaCetes", "Tipodecambio", "SalarioMinimo", "SalarioContractual", "IGAE")
+
+setToken("a9525e75ebc63fe5d45c1c164f8d2d35ae6c9e9b58c4bfa6d4827fe4d3998f35") # Token obtenido por BANXICO
+idSeries <- ID_Series
+
+series <- getSeriesData(idSeries, '2019-12-01', '2024-06-01') # Descarga la base de datos
+```
+
+```{r}
+# Extrae cada valor de la base
+Tasa_Cetes <- data.frame(TasaCetes = series$SF282$value) # Cetes a 28 días. Tasa de rendimiento promedio mensual, en por ciento anual
+
+Tipode_Cambio <- data.frame(TipoDeCambioMX_DL = series$SF18561$value) # Tipo de cambio pesos por dólar E.U.A. para solventar obligaciones denominadas en moneda extranjera Fecha de publicación en el DOF. Cotizaciones promedio
+
+Salario_Minimo <- data.frame(SalarioMinimo = series$SL11298$value) # Salarios Mínimos General Pesos por día
+
+Salario_Contractual <- data.frame(SalarioContractual = series$SL138$value) # Salarios contractuales Revisiones salariales 
+
+IGAEx <- data.frame( IGAE = series$SR17693$value) # Indicador global de la actividad económica. Total (IGAE) Base 2018 Serie desestacionalizada
+```
+
+## Series del INEGI
+
+**Extracción de las series**
+
+- Se utiliza un primer token para la descarga de las APIs.
+```{r}
+# Se define la URL de la API
+
+Nombres <- c("Tasa de Desempleo","IGREMSE","ICC","IMMEX","INPC","IISBSM",
+             "TEM","TIIE","IAI","SICC,SICA,IGAESFYG,IPCBMVCC")
+indicadores <- c("444666,702135,454186,454549,910413,214300,214310,214318,214298,436140,436142,737301,214313")
+
+url <- paste0("https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/",indicadores,"/es/0700/false/BIE/2.0/d26ee819-4458-aa7c-7dda-899d255804dd?type=json") 
+# Realiza la solicitud a la API
+response <- GET(url)
+
+# Convertir la respuesta en texto y luego en JSON
+response_text <- content(response, as = "text", encoding = "UTF-8")
+data <- fromJSON(response_text)
+
+# Se extrae la columna OBSERVATIONS, la cual es una lista
+datos_inegi_TD <- data$Series$OBSERVATIONS[[1]]
+datos_inegi_IGREMSE <- data$Series$OBSERVATIONS[[2]] 
+datos_inegi_ICC <- data$Series$OBSERVATIONS[[3]]
+datos_inegi_IMMEX <- data$Series$OBSERVATIONS[[4]] 
+datos_inegi_INPC <- data$Series$OBSERVATIONS[[5]]
+datos_inegi_IISBSM <- data$Series$OBSERVATIONS[[6]]
+datos_inegi_TEM <- data$Series$OBSERVATIONS[[7]]
+datos_inegi_TIIE <- data$Series$OBSERVATIONS[[8]]
+datos_inegi_IAI <- data$Series$OBSERVATIONS[[9]]
+datos_inegi_SICC <- data$Series$OBSERVATIONS[[10]]
+datos_inegi_SICA <- data$Series$OBSERVATIONS[[11]]
+datos_inegi_IGAESFYG <- data$Series$OBSERVATIONS[[12]]
+datos_inegi_IPCBMVCC <- data$Series$OBSERVATIONS[[13]]
+# Se extraen los datos del 1 de diciembre del 2019 al 1 de junio del 2024
+
+
+TasaDeDesempleoEx <- data.frame(datos_inegi_TD$OBS_VALUE[10:64])
+IGREMSEEx <- data.frame(datos_inegi_IGREMSE$OBS_VALUE[9:63])
+ICCEx <- data.frame(datos_inegi_ICC$OBS_VALUE[11:65])
+IMMEXEx <- data.frame(datos_inegi_IMMEX$OBS_VALUE[9:63])
+INPCEx <- data.frame(datos_inegi_INPC$OBS_VALUE[11:65])
+IISBSMEx <- data.frame(datos_inegi_IISBSM$OBS_VALUE[10:64])
+TEMEx <- data.frame(datos_inegi_TEM$OBS_VALUE[11:65])
+TIIEEx <- data.frame(datos_inegi_TIIE$OBS_VALUE[11:65])
+IAIEx <- data.frame(datos_inegi_IAI$OBS_VALUE[10:64])
+SICCEx <- data.frame(datos_inegi_SICC$OBS_VALUE[9:63])
+SICAEx <- data.frame(datos_inegi_SICA$OBS_VALUE[9:63])
+IGAESFYGEx <- data.frame(datos_inegi_IGAESFYG$OBS_VALUE[10:64])
+IPCBMVCCEx <- data.frame(datos_inegi_IPCBMVCC$OBS_VALUE[11:65])
+
+```
+
+
+## Series extraídas en excel
+
+
+```{r}
+# Estas series estan contenidas en el archivo de excel adjunto, que lleva por nombre "PrecioPetroleo"
+PIBMen <- read_excel("PrecioPetroleo.xlsx", sheet = "PIB")
+```
+
+
+## Base de Datos para el modelo
+
+```{r}
+
+VariablesMacroeconomicas <- data.frame(Cete = Tasa_Cetes$TasaCetes,
+                                       TC = Tipode_Cambio$TipoDeCambioMX_DL,
+                                       SMG = Salario_Minimo$SalarioMinimo,
+                                       SC =Salario_Contractual$SalarioContractual,
+                                       IGAE = IGAEx$IGAE,
+                                       INPC = INPCEx$datos_inegi_INPC.OBS_VALUE.11.65.,
+                                       TD=TasaDeDesempleoEx$datos_inegi_TD.OBS_VALUE.10.64.,
+                                       IGREMSE = IGREMSEEx$datos_inegi_IGREMSE.OBS_VALUE.9.63.,
+                                       ICC = ICCEx$datos_inegi_ICC.OBS_VALUE.11.65.,
+                                       IMMEX = IMMEXEx$datos_inegi_IMMEX.OBS_VALUE.9.63.,
+                                       PIB = PIBMen$PIB,
+                                       IISBSM = IISBSMEx$datos_inegi_IISBSM.OBS_VALUE.10.64.,
+                                       TEM = TEMEx$datos_inegi_TEM.OBS_VALUE.11.65.,
+                                       TIIE = TIIEEx$datos_inegi_TIIE.OBS_VALUE.11.65.,
+                                       IAI = IAIEx$datos_inegi_IAI.OBS_VALUE.10.64.,
+                                       SICC = SICCEx$datos_inegi_SICC.OBS_VALUE.9.63.,
+                                       SICA = SICAEx$datos_inegi_SICA.OBS_VALUE.9.63.,
+                                       IGAESFYGE=IGAESFYGEx$datos_inegi_IGAESFYG.OBS_VALUE.10.64.,
+                                       IPCBMVCC =IPCBMVCCEx$datos_inegi_IPCBMVCC.OBS_VALUE.11.65.)
+
+
+```
+# Captacion Tradicional
+
+```{r}
+library(readxl)
+
+# Leer el archivo Excel
+datos <- read_excel("Proyecto 4 Cuentas de Captación 2024.xlsx", sheet = "Cap")
+datos$Fecha <- as.Date(datos$Fecha)
+
+```
+
+Con los datos macroeconómicos obtenidos se va a realizar el modelo macroeconómico y así explicar la relación entre las cuentas de captación (Depósito Vista y Depósitos a plazo) para cada uno de los bancos.
+
+```{r}
+# Se une los data frames
+Datos <- cbind(datos,VariablesMacroeconomicas)
+head(Datos)
+```
+
+```{r}
+d1 <- Datos
+
+# Se transforma los datos a numéricos y se comprueba
+# C
+d1[-1] <- lapply(d1[-1], function(col) {
+  
+  if (is.factor(col)) {
+    col <- as.character(col)
+  }
+  
+  suppressWarnings(as.numeric(col))
+})
+
+
+d2 <- d1
+
+summary(d2)
+
+# Lista de bancos
+bancos <- c("TBM_DV",	"TBM_DP",	"Banamex_DV",	"Banamex_DP",	"BBVA_DV",	"BBVA_DP",	"Santander_DV",	"Santander_DP",	"Banorte_DV",	"Banorte_DP")
+
+
+for (col in names(d1)) {
+  if (col == "Fecha") {
+    # Copiar la columna Fecha sin modificar
+    d2[[col]] <- d1[[col]]
+  } else {
+    # Escalar el resto
+    d2[[col]] <- scale(d1[[col]])
+  }
+}
+
+
+d2
+
+
+```
+# Para Depósito vista
+
+## Modelo de Regresión Múltiple
+
+**Modelo para TBM**
+```{r}
+modDV_TBM <- lm(TBM_DV~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDV_TBM)
+
+modDV_TBM2 <- lm(TBM_DV~Cete+TC+SICC+SMG+TD+IISBSM+IGAESFYGE, data = d2)
+summary(modDV_TBM2)
+
+# Evaluamos el modelo
+PredicciónDV_TBM <- predict(modDV_TBM2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = TBM_DV, y = PredicciónDV_TBM)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_TBM <- summary(modDV_TBM2)$r.squared)
+```
+
+
+**Modelo para BBVA**
+```{r}
+modDV_BBVA <- lm(BBVA_DV~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC,data=d2)
+summary(modDV_BBVA)
+
+modDV_BBVA2 <- lm(BBVA_DV~SMG+TC+TD+IISBSM+SICC, data=d2)
+summary(modDV_BBVA2)
+
+# Evaluamos el modelo
+PredicciónDV_BBVA <- predict(modDV_BBVA2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DV, y = PredicciónDV_BBVA)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_BBVA <- summary(modDV_BBVA2)$r.squared)  
+```
+
+**Modelos Banorte**
+```{r}
+modDV_Banorte <- lm(Banorte_DV~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDV_Banorte)
+
+modDV_Banorte2 <- lm(Banorte_DV~Cete+SMG+TD+TIIE+IGAESFYGE, data=d2)
+summary(modDV_Banorte2)
+
+# Evaluamos el modelo
+Predicción_Banorte <- predict(modDV_Banorte2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DV, y = Predicción_Banorte)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_Banorte <- summary(modDV_Banorte2)$r.squared)
+```
+
+**Modelo Santander**
+```{r}
+modDV_Santander <- lm(Santander_DV~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDV_Santander)
+
+modDV_Santander2 <- lm(Santander_DV~Cete+TC+SMG+SC+IGAE+TEM+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDV_Santander2)
+
+# Evaluamos el modelo
+Predicción_Santander <- predict(modDV_Santander2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = Santander_DV, y = Predicción_Santander)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_Santander <- summary(modDV_Santander2)$r.squared) 
+```
+
+**Modelo Banamex**
+```{r}
+modDV_Banamex <- lm(Banamex_DV~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDV_Banamex)
+
+modDV_Banamex2 <- lm(Banamex_DV~Cete+TC+SMG+TD+IAI+IGAESFYGE, data=d2)
+summary(modDV_Banamex2)
+
+# Evaluamos el modelo
+Predicción_Banamex <- predict(modDV_Banamex2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DV, y = Predicción_Banamex)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_Banamex <- summary(modDV_Banamex2)$r.squared)
+```
+
+
+## Modelos de Regresión Múltiple con con penalización Ridge
+
+Datos generales para todos los bancos
+```{r}
+# Definir la matriz de variables predictoras (X) y la variable respuesta (y)
+X <- as.matrix(d2[, c("Cete","TC","SMG","SC","IGAE","INPC","TD","IGREMSE","ICC","IMMEX","PIB","IISBSM","TEM","TIIE","IAI","SICC","SICA","IGAESFYGE","IPCBMVCC")])
+
+lambda <- 10^seq(3, -2, by = -0.1) #Se define una secuencia de lambda, donde 10^3 es un valor alto con fuerte penalización y 
+# 10^(-2) es un valor bajo con penalización casi nula
+
+```
+
+**Modelo TBM**
+```{r}
+# Variable respuesta (y)
+y <- d2$TBM_DV
+
+# Ajustar el modelo Ridge
+ridge_TBM <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_TBM <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda <- cv_ridge_TBM$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_TBM <- predict(ridge_TBM, s = mejor_lambda, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+TBM_ridge <- as.vector(ridgePred_TBM)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = TBM_DV, y = TBM_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+#R-squared
+(r_squaredRidge_TBM <- 1 - (sum((y - ridgePred_TBM)^2) / sum((y - mean(y))^2))) 
+
+#Betas
+(coef_ridge <- coef(ridge_TBM, s = mejor_lambda))
+```
+
+**Modelo BBVA**
+```{r}
+# Variable respuesta (y)
+y <- d2$BBVA_DV
+
+# Ajustar el modelo Ridge
+ridge_BBVA <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_BBVA <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda2 <- cv_ridge_BBVA$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_BBVA <- predict(ridge_BBVA, s = mejor_lambda2, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+BBVA_ridge <- as.vector(ridgePred_BBVA)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DV, y = BBVA_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+#R-squared
+(r_squaredRidge_BBVA <- 1 - (sum((y - ridgePred_BBVA)^2) / sum((y - mean(y))^2)))
+
+#Betas
+(coef_ridge <- coef(ridge_BBVA, s = mejor_lambda2))
+```
+
+**Modelo Banorte**
+```{r}
+# Variable respuesta (y)
+y <- d2$Banorte_DV
+
+# Ajustar el modelo Ridge
+ridge_Banorte <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_Banorte <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda3 <- cv_ridge_Banorte$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_Banorte <- predict(ridge_Banorte, s = mejor_lambda3, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+Banorte_ridge <- as.vector(ridgePred_Banorte)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DV, y = Banorte_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+# R-squared
+(r_squaredRidge_Banorte <- 1 - (sum((y - ridgePred_Banorte)^2) / sum((y - mean(y))^2))) 
+
+#Betas
+(coef_ridge <- coef(ridge_Banorte, s = mejor_lambda3))
+```
+
+**Modelo Santander**
+```{r}
+# Variable respuesta (y)
+y <- d2$Santander_DV
+
+# Ajustar el modelo Ridge
+ridge_Santander <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_Santander <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda4 <- cv_ridge_Santander$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_Santander <- predict(ridge_Santander, s = mejor_lambda4, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+Santander_ridge <- as.vector(ridgePred_Santander)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Santander_DV, y = Santander_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+# R-squared
+(r_squaredRidge_Santander <- 1 - (sum((y - ridgePred_Santander)^2) / sum((y - mean(y))^2)) )
+
+#Betas
+(coef_ridge <- coef(ridge_Santander, s = mejor_lambda4))
+```
+
+**Modelo Banamex**
+```{r}
+# Variable respuesta (y)
+y <- d2$Banamex_DV
+
+# Ajustar el modelo Ridge
+ridge_Banamex <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_Banamex <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda5 <- cv_ridge_Banamex$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_Banamex <- predict(ridge_Banamex, s = mejor_lambda5, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+Banamex_ridge <- as.vector(ridgePred_Banamex)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DV, y = Banamex_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+# R-squared
+(r_squaredRidge_Banamex <- 1 - (sum((y - ridgePred_Banamex)^2) / sum((y - mean(y))^2))) 
+
+#Betas
+(coef_ridge <- coef(ridge_Banamex, s = mejor_lambda5))
+```
+
+
+##  Modelo de Regresión Múltiple con penalización Lasso
+
+**Para Total Banca Múltiple**
+```{r}
+# Ajuste de el modelo Lasso
+set.seed(123)  
+Y <- d2$TBM_DV
+lasso_modelTBM <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoTBM <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoTBM <- cv_lassoTBM$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoTBM <- coef(cv_lassoTBM, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoTBM <- predict(lasso_modelTBM, s = mejor_lambda_lassoTBM, newx = X) 
+
+# Convertimos la predicción en un vector
+TBM_lasso <- as.vector(Pred_lassoTBM)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = TBM_DV, y = TBM_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_TBM <- 1 - (sum((Y - Pred_lassoTBM)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para BBVA**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$BBVA_DV
+lasso_modelBBVA <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoBBVA <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoBBVA <- cv_lassoBBVA$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoBBVA <- coef(cv_lassoBBVA, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoBBVA <- predict(lasso_modelBBVA, s = mejor_lambda_lassoBBVA, newx = X) 
+
+# Convertimos la predicción en un vector
+BBVA_lasso <- as.vector(Pred_lassoBBVA)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DV, y = BBVA_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_BBVA <- 1 - (sum((Y - Pred_lassoBBVA)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banorte**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Banorte_DV
+lasso_modelBae <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoBae <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoBae <- cv_lassoBae$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoBae <- coef(cv_lassoBae, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoBae <- predict(lasso_modelBae, s = mejor_lambda_lassoBae, newx = X)
+
+# Convertimos la predicción en un vector
+Bae_lasso <- as.vector(Pred_lassoBae)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DV, y = Bae_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_Banorte <- 1 - (sum((Y - Pred_lassoBae)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Santander**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Santander_DV
+lasso_modelSan <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoSan <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoSan <- cv_lassoSan$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoSan <- coef(cv_lassoSan, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoSan <- predict(lasso_modelSan, s = mejor_lambda_lassoSan, newx = X) 
+
+# Convertimos la predicción en un vector
+San_lasso <- as.vector(Pred_lassoSan)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Santander_DV, y = San_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_Santander <- 1 - (sum((Y - Pred_lassoSan)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banamex**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Banamex_DV
+lasso_modelBax <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoBax <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoBax <- cv_lassoBax$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoBax <- coef(cv_lassoBax, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoBax <- predict(lasso_modelBax, s = mejor_lambda_lassoBax, newx = X) 
+
+# Convertimos la predicción en un vector
+Bax_lasso <- as.vector(Pred_lassoBax)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DV, y = Bax_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_Banamex <- 1 - (sum((Y - Pred_lassoBax)^2) / sum((Y - mean(Y))^2)) )
+```
+
+
+
+## Modelo de Regresión Múltiple con penalización Elastic Net
+
+**Para Total Banca Múltiple**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$TBM_DV
+EN_modelTBM <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENTBM <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENTBM <- cv_ENTBM$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENTBM <- coef(cv_ENTBM, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENTBM <- predict(EN_modelTBM, s = mejor_lambda_ENTBM, newx = X) 
+
+# Convertimos la predicción en un vector
+TBM_EN <- as.vector(Pred_ENTBM)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = TBM_DV, y = TBM_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_TBM <- 1 - (sum((Y - Pred_ENTBM)^2) / sum((Y - mean(Y))^2)) )
+```
+ 
+**Para BBVA**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$BBVA_DV
+EN_modelBBVA <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENBBVA <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENBBVA <- cv_ENBBVA$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENBBVA <- coef(cv_ENBBVA, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENBBVA <- predict(EN_modelBBVA, s = mejor_lambda_ENBBVA, newx = X) 
+
+# Convertimos la predicción en un vector
+BBVA_EN <- as.vector(Pred_ENBBVA)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DV, y = BBVA_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_BBVA <- 1 - (sum((Y - Pred_ENBBVA)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banorte**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad
+Y <- d2$Banorte_DV
+EN_modelBae <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENBae <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENBae <- cv_ENBae$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENBae <- coef(cv_ENBae, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENBae <- predict(EN_modelBae, s = mejor_lambda_ENBae, newx = X) 
+
+# Convertimos la predicción en un vector
+Bae_EN <- as.vector(Pred_ENBae)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DV, y = Bae_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_Banorte <- 1 - (sum((Y - Pred_ENBae)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Santander**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Santander_DV
+EN_modelSan <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENSan <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENSan <- cv_ENSan$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENSan <- coef(cv_ENSan, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENSan <- predict(EN_modelSan, s = mejor_lambda_ENSan, newx = X) 
+
+# Convertimos la predicción en un vector
+San_EN <- as.vector(Pred_ENSan)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Santander_DV, y = San_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_Santander <- 1 - (sum((Y - Pred_ENSan)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banamex**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Banamex_DV
+EN_modelBax <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENBax <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENBax <- cv_ENBax$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENBax <- coef(cv_ENBax, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENBax <- predict(EN_modelBax, s = mejor_lambda_ENBax, newx = X) 
+
+# Convertimos la predicción en un vector
+Bax_EN <- as.vector(Pred_ENBax)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DV, y = Bax_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_Banamex <- 1 - (sum((Y - Pred_ENBax)^2) / sum((Y - mean(Y))^2))) 
+```
+
+#Comparación de R-squared de Depósito Vista
+
+```{r}
+tabla_comparativa_vista <- data.frame(
+  Modelo = c("Regresión Múltiple-TBM", "Lasso-TBM", "Ridge-TBM", "Elastic Net-TBM","Regresión Múltiple-BBVA", "Lasso-BBVA", "Ridge-BBVA", "Elastic Net-BBVA","Regresión Múltiple-Banamex", "Lasso-Banamex", "Ridge-Banamex", "Elastic Net-Banamex","Regresión Múltiple-Santander", "Lasso-Santander", "Ridge-Santander", "Elastic Net-Santander","Regresión Múltiple-Banorte", "Lasso-Banorte", "Ridge-Banorte", "Elastic Net-Banorte"),
+  R_cuadrado = c(r_squaredRM_TBM, r_squaredLasso_TBM, r_squaredRidge_TBM, r_squaredEN_TBM,r_squaredRM_BBVA,r_squaredLasso_BBVA,r_squaredRidge_BBVA,r_squaredEN_BBVA,r_squaredRM_Banamex,r_squaredLasso_Banamex,r_squaredRidge_Banamex,r_squaredEN_Banamex,r_squaredRM_Santander,r_squaredLasso_Santander,r_squaredRidge_Santander,r_squaredEN_Santander,r_squaredRM_Banorte,r_squaredLasso_Banorte,r_squaredRidge_Banorte,r_squaredEN_Banorte),
+  stringsAsFactors = FALSE
+)
+tabla_comparativa_vista
+```
+
+
+
+# Para Depósito a plazo
+
+## Modelo de Regresión Múltiple
+
+**Modelo para TBM**
+```{r}
+modDP_TBM <- lm(TBM_DP~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDP_TBM)
+
+modDP_TBM2 <- lm(TBM_DP~Cete+TC+SMG+ICC+TIIE+IPCBMVCC, data = d2)
+summary(modDP_TBM2)
+
+# Evaluamos el modelo
+PredicciónDP_TBM <- predict(modDP_TBM2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = TBM_DP, y = PredicciónDP_TBM)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_TBM <- summary(modDP_TBM2)$r.squared)
+```
+
+
+**Modelo para BBVA**
+```{r}
+modDP_BBVA <- lm(BBVA_DP~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC,data=d2)
+summary(modDP_BBVA)
+
+modDP_BBVA2 <- lm(BBVA_DP~TC+SMG+IGAE+TIIE+IAI+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDP_BBVA2)
+
+# Evaluamos el modelo
+PredicciónDP_BBVA <- predict(modDP_BBVA2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DP, y = PredicciónDP_BBVA)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_BBVA <- summary(modDP_BBVA2)$r.squared)  
+```
+
+**Modelos Banorte**
+```{r}
+modDP_Banorte <- lm(Banorte_DP~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDP_Banorte)
+
+modDP_Banorte2 <- lm(Banorte_DP~Cete+SMG+IGAE+ICC+IMMEX+PIB+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDP_Banorte2)
+
+# Evaluamos el modelo
+Predicción_Banorte <- predict(modDP_Banorte2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DP, y = Predicción_Banorte)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_Banorte <- summary(modDP_Banorte2)$r.squared)
+```
+
+**Modelo Santander**
+```{r}
+modDP_Santander <- lm(Santander_DP~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDP_Santander)
+
+modDP_Santander2 <- lm(Santander_DP~Cete+TC+SMG+TD+IGREMSE+ICC+IMMEX+PIB+TEM+TIIE+IPCBMVCC, data=d2)
+summary(modDP_Santander2)
+
+# Evaluamos el modelo
+Predicción_Santander <- predict(modDP_Santander2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = Santander_DP, y = Predicción_Santander)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_Santander <- summary(modDP_Santander2)$r.squared) 
+```
+
+**Modelo Banamex**
+```{r}
+modDP_Banamex <- lm(Banamex_DP~Cete+TC+SMG+SC+IGAE+INPC+TD+IGREMSE+ICC+IMMEX+PIB+IISBSM+TEM+TIIE+IAI+SICC+SICA+IGAESFYGE+IPCBMVCC, data=d2)
+summary(modDP_Banamex)
+
+modDP_Banamex2 <- lm(Banamex_DP~Cete+TC+SMG+SC+IGAE+TIIE, data=d2)
+summary(modDP_Banamex2)
+
+# Evaluamos el modelo
+Predicción_Banamex <- predict(modDP_Banamex2, newdata = d2)
+
+# Gráfica de valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DP, y = Predicción_Banamex)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", x = "Real", y = "Predicho")
+
+#R-squared
+(r_squaredRM_Banamex <- summary(modDP_Banamex2)$r.squared)
+```
+
+
+## Modelos de Regresión Múltiple con con penalización Ridge
+
+Datos generales para todos los bancos
+```{r}
+# Definir la matriz de variables predictoras (X) y la variable respuesta (y)
+X <- as.matrix(d2[, c("Cete","TC","SMG","SC","IGAE","INPC","TD","IGREMSE","ICC","IMMEX","PIB","IISBSM","TEM","TIIE","IAI","SICC","SICA","IGAESFYGE","IPCBMVCC")])
+
+lambda <- 10^seq(3, -2, by = -0.1) #Se define una secuencia de lambda, donde 10^3 es un valor alto con fuerte penalización y 
+# 10^(-2) es un valor bajo con penalización casi nula
+
+```
+
+**Modelo TBM**
+```{r}
+# Variable respuesta (y)
+y <- d2$TBM_DP
+
+# Ajustar el modelo Ridge
+ridge_TBM <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_TBM <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda <- cv_ridge_TBM$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_TBM <- predict(ridge_TBM, s = mejor_lambda, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+TBM_ridge <- as.vector(ridgePred_TBM)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = TBM_DP, y = TBM_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+#R-squared
+(r_squaredRidge_TBM <- 1 - (sum((y - ridgePred_TBM)^2) / sum((y - mean(y))^2))) 
+
+#Betas
+(coef_ridge <- coef(ridge_TBM, s = mejor_lambda))
+```
+
+**Modelo BBVA**
+```{r}
+# Variable respuesta (y)
+y <- d2$BBVA_DP
+
+# Ajustar el modelo Ridge
+ridge_BBVA <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_BBVA <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda2 <- cv_ridge_BBVA$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_BBVA <- predict(ridge_BBVA, s = mejor_lambda2, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+BBVA_ridge <- as.vector(ridgePred_BBVA)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DP, y = BBVA_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+#R-squared
+(r_squaredRidge_BBVA <- 1 - (sum((y - ridgePred_BBVA)^2) / sum((y - mean(y))^2)))
+
+#Betas
+(coef_ridge <- coef(ridge_BBVA, s = mejor_lambda2))
+```
+
+**Modelo Banorte**
+```{r}
+# Variable respuesta (y)
+y <- d2$Banorte_DP
+
+# Ajustar el modelo Ridge
+ridge_Banorte <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_Banorte <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda3 <- cv_ridge_Banorte$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_Banorte <- predict(ridge_Banorte, s = mejor_lambda3, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+Banorte_ridge <- as.vector(ridgePred_Banorte)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DP, y = Banorte_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+# R-squared
+(r_squaredRidge_Banorte <- 1 - (sum((y - ridgePred_Banorte)^2) / sum((y - mean(y))^2))) 
+
+#Betas
+(coef_ridge <- coef(ridge_Banorte, s = mejor_lambda3))
+```
+
+**Modelo Santander**
+```{r}
+# Variable respuesta (y)
+y <- d2$Santander_DP
+
+# Ajustar el modelo Ridge
+ridge_Santander <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_Santander <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda4 <- cv_ridge_Santander$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_Santander <- predict(ridge_Santander, s = mejor_lambda4, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+Santander_ridge <- as.vector(ridgePred_Santander)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Santander_DP, y = Santander_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+# R-squared
+(r_squaredRidge_Santander <- 1 - (sum((y - ridgePred_Santander)^2) / sum((y - mean(y))^2)) )
+
+#Betas
+(coef_ridge <- coef(ridge_Santander, s = mejor_lambda4))
+```
+
+**Modelo Banamex**
+```{r}
+# Variable respuesta (y)
+y <- d2$Banamex_DP
+
+# Ajustar el modelo Ridge
+ridge_Banamex <- glmnet(X, y, alpha = 0, lambda = lambda) # En el modelo de Ridge el alpha se fija en 0
+
+# Validación cruzada para seleccionar el mejor lambda
+set.seed(123)
+cv_ridge_Banamex <- cv.glmnet(X, y, alpha = 0, lambda = lambda)
+
+mejor_lambda5 <- cv_ridge_Banamex$lambda.min # Extrae el mejor valor de lambda
+
+ridgePred_Banamex <- predict(ridge_Banamex, s = mejor_lambda5, newx = X) # Predicciones con el mejor lambda
+
+# Convertimos la predicción en un vector
+Banamex_ridge <- as.vector(ridgePred_Banamex)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DP, y = Banamex_ridge)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Regresión Ridge: Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+```
+
+```{r}
+# R-squared
+(r_squaredRidge_Banamex <- 1 - (sum((y - ridgePred_Banamex)^2) / sum((y - mean(y))^2))) 
+
+#Betas
+(coef_ridge <- coef(ridge_Banamex, s = mejor_lambda5))
+```
+
+
+##  Modelo de Regresión Múltiple con penalización Lasso
+
+**Para Total Banca Múltiple**
+```{r}
+# Ajuste de el modelo Lasso
+set.seed(123)  
+Y <- d2$TBM_DP
+lasso_modelTBM <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoTBM <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoTBM <- cv_lassoTBM$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoTBM <- coef(cv_lassoTBM, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoTBM <- predict(lasso_modelTBM, s = mejor_lambda_lassoTBM, newx = X) 
+
+# Convertimos la predicción en un vector
+TBM_lasso <- as.vector(Pred_lassoTBM)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = TBM_DP, y = TBM_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_TBM <- 1 - (sum((Y - Pred_lassoTBM)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para BBVA**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$BBVA_DP
+lasso_modelBBVA <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoBBVA <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoBBVA <- cv_lassoBBVA$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoBBVA <- coef(cv_lassoBBVA, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoBBVA <- predict(lasso_modelBBVA, s = mejor_lambda_lassoBBVA, newx = X) 
+
+# Convertimos la predicción en un vector
+BBVA_lasso <- as.vector(Pred_lassoBBVA)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DP, y = BBVA_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_BBVA <- 1 - (sum((Y - Pred_lassoBBVA)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banorte**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Banorte_DP
+lasso_modelBae <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoBae <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoBae <- cv_lassoBae$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoBae <- coef(cv_lassoBae, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoBae <- predict(lasso_modelBae, s = mejor_lambda_lassoBae, newx = X)
+
+# Convertimos la predicción en un vector
+Bae_lasso <- as.vector(Pred_lassoBae)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DP, y = Bae_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_Banorte <- 1 - (sum((Y - Pred_lassoBae)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Santander**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Santander_DP
+lasso_modelSan <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoSan <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoSan <- cv_lassoSan$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoSan <- coef(cv_lassoSan, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoSan <- predict(lasso_modelSan, s = mejor_lambda_lassoSan, newx = X) 
+
+# Convertimos la predicción en un vector
+San_lasso <- as.vector(Pred_lassoSan)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Santander_DP, y = San_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_Santander <- 1 - (sum((Y - Pred_lassoSan)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banamex**
+```{r}
+# Ajustar el modelo Lasso
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Banamex_DP
+lasso_modelBax <- glmnet(x=X, y=Y,alpha = 1)
+
+# Validación cruzada para Lasso
+cv_lassoBax <- cv.glmnet(x=X, y=Y,alpha = 1)
+
+# Mejor valor de lambda
+mejor_lambda_lassoBax <- cv_lassoBax$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_lassoBax <- coef(cv_lassoBax, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_lassoBax <- predict(lasso_modelBax, s = mejor_lambda_lassoBax, newx = X) 
+
+# Convertimos la predicción en un vector
+Bax_lasso <- as.vector(Pred_lassoBax)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DP, y = Bax_lasso)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredLasso_Banamex <- 1 - (sum((Y - Pred_lassoBax)^2) / sum((Y - mean(Y))^2)) )
+```
+
+
+
+## Modelo de Regresión Múltiple con penalización Elastic Net
+
+**Para Total Banca Múltiple**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$TBM_DP
+EN_modelTBM <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENTBM <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENTBM <- cv_ENTBM$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENTBM <- coef(cv_ENTBM, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENTBM <- predict(EN_modelTBM, s = mejor_lambda_ENTBM, newx = X) 
+
+# Convertimos la predicción en un vector
+TBM_EN <- as.vector(Pred_ENTBM)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = TBM_DP, y = TBM_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_TBM <- 1 - (sum((Y - Pred_ENTBM)^2) / sum((Y - mean(Y))^2)) )
+```
+ 
+**Para BBVA**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$BBVA_DP
+EN_modelBBVA <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENBBVA <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENBBVA <- cv_ENBBVA$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENBBVA <- coef(cv_ENBBVA, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENBBVA <- predict(EN_modelBBVA, s = mejor_lambda_ENBBVA, newx = X) 
+
+# Convertimos la predicción en un vector
+BBVA_EN <- as.vector(Pred_ENBBVA)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = BBVA_DP, y = BBVA_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_BBVA <- 1 - (sum((Y - Pred_ENBBVA)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banorte**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad
+Y <- d2$Banorte_DP
+EN_modelBae <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENBae <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENBae <- cv_ENBae$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENBae <- coef(cv_ENBae, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENBae <- predict(EN_modelBae, s = mejor_lambda_ENBae, newx = X) 
+
+# Convertimos la predicción en un vector
+Bae_EN <- as.vector(Pred_ENBae)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banorte_DP, y = Bae_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_Banorte <- 1 - (sum((Y - Pred_ENBae)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Santander**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Santander_DP
+EN_modelSan <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENSan <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENSan <- cv_ENSan$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENSan <- coef(cv_ENSan, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENSan <- predict(EN_modelSan, s = mejor_lambda_ENSan, newx = X) 
+
+# Convertimos la predicción en un vector
+San_EN <- as.vector(Pred_ENSan)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Santander_DP, y = San_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_Santander <- 1 - (sum((Y - Pred_ENSan)^2) / sum((Y - mean(Y))^2))) 
+```
+
+**Para Banamex**
+```{r}
+# Ajustar el modelo Elastic Net
+set.seed(123)  # Para reproducibilidad 
+Y <- d2$Banamex_DP
+EN_modelBax <- glmnet(x=X, y=Y,alpha = 0.5)
+
+# Validación cruzada para Elastic Net
+cv_ENBax <- cv.glmnet(x=X, y=Y,alpha = 0.5)
+
+# Mejor valor de lambda
+mejor_lambda_ENBax <- cv_ENBax$lambda.min
+
+# Coeficientes del modelo con el mejor lambda
+(coef_ENBax <- coef(cv_ENBax, s = "lambda.min"))
+```
+
+```{r}
+# Predicciones con el mejor lambda
+Pred_ENBax <- predict(EN_modelBax, s = mejor_lambda_ENBax, newx = X) 
+
+# Convertimos la predicción en un vector
+Bax_EN <- as.vector(Pred_ENBax)
+
+# Graficar valores reales vs predichos
+ggplot(d2, aes(x = Banamex_DP, y = Bax_EN)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(title = "Valores Reales vs Predichos", 
+       x = "Real", y = "Predicho")
+
+# R-squared
+(r_squaredEN_Banamex <- 1 - (sum((Y - Pred_ENBax)^2) / sum((Y - mean(Y))^2))) 
+```
+
+#Comparación de R-squared de Depósito a Plazo
+
+```{r}
+tabla_comparativa_plazo <- data.frame(
+  Modelo = c("Regresión Múltiple-TBM", "Lasso-TBM", "Ridge-TBM", "Elastic Net-TBM","Regresión Múltiple-BBVA", "Lasso-BBVA", "Ridge-BBVA", "Elastic Net-BBVA","Regresión Múltiple-Banamex", "Lasso-Banamex", "Ridge-Banamex", "Elastic Net-Banamex","Regresión Múltiple-Santander", "Lasso-Santander", "Ridge-Santander", "Elastic Net-Santander","Regresión Múltiple-Banorte", "Lasso-Banorte", "Ridge-Banorte", "Elastic Net-Banorte"),
+  R_cuadrado = c(r_squaredRM_TBM, r_squaredLasso_TBM, r_squaredRidge_TBM, r_squaredEN_TBM,r_squaredRM_BBVA,r_squaredLasso_BBVA,r_squaredRidge_BBVA,r_squaredEN_BBVA,r_squaredRM_Banamex,r_squaredLasso_Banamex,r_squaredRidge_Banamex,r_squaredEN_Banamex,r_squaredRM_Santander,r_squaredLasso_Santander,r_squaredRidge_Santander,r_squaredEN_Santander,r_squaredRM_Banorte,r_squaredLasso_Banorte,r_squaredRidge_Banorte,r_squaredEN_Banorte),
+  stringsAsFactors = FALSE
+)
+tabla_comparativa_plazo
+```
+
+#Comparacion final de R^2
+```{r}
+tabla_comparativa_vista$Plazo <- "Vista"
+tabla_comparativa_plazo$Plazo <- "Plazo"
+
+# Combinar las tablas
+tabla_combinada <- rbind(tabla_comparativa_vista, tabla_comparativa_plazo)
+
+# Separación de Banco y Modelo
+tabla_combinada <- tabla_combinada %>%
+  separate(Modelo, into = c("Modelo", "Banco"), sep = "-")
+
+# Tabla comparativa
+tabla_combinada %>%
+  pivot_wider(names_from = Plazo, values_from = R_cuadrado) %>%
+  kable(digits = 4, caption = "Comparación de R² Vista vs Plazo") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
