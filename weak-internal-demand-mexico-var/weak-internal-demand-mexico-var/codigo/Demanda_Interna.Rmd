@@ -1,0 +1,875 @@
+---
+title: ""
+output: html_document
+---
+## Introducción
+
+La demanda interna hace referencia al volumen de bienes y servicios que los consumidores dentro del país están dispuestos y en capacidad de adquirir. De acuerdo con el Instituto Nacional de Estadística y Geografía (INEGI), la demanda interna funciona como un indicador económico que refleja el nivel de gasto que realizan los distintos agentes económicos en el país, ya sea el sector público o privado, en consumo e inversión durante un periodo específico. Su comportamiento es esencial para evaluar la fortaleza y el dinamismo de la actividad económica nacional.
+
+En el caso de México, en los últimos treinta años, se ha observado un desempeño inferior al esperado en materia de crecimiento económico, inclusión social y disminución de la pobreza, en comparación con países de desarrollo similar. Para el año 2025, se proyectaba que la economía mexicana crecería alrededor de 0.5%, con una recuperación paulatina hasta alcanzar el 1.9% en 2027. Este comportamiento responde, en gran medida, a la desaceleración tanto de la demanda interna como de la externa, a esto se le incorpora la incertidumbre en materia de política comercial, como lo es el aumento de los aranceles estadounidenses. 
+
+De acuerdo con un análisis económico de América Latina realizado por la S&P Global Ratings, señala que, la demanda interna superó el crecimiento del PIB en la mayoría de los países latinoamericanos; sin embargo, México se mantiene rezagado debido a que la demanda interna ha sido débil durante este 2025, lo que ha ocasionado una fuerte caída en la inversión pública fija, asociada a esfuerzos de consolidación fiscal del gobierno actual. Dentro de este análisis, se destaca que aunque el desempleo se ha mantenido por debajo del 3%,el empleo formal se ha estancado y el aumento del empleo informal evidencian tensiones adicionales en el mercado laboral.
+
+Las cifras obtenidas durante estos meses confirman la fragilidad de la economía mexicana, puesto que el crecimiento del consumo privado creció apenas un 0.1% en octubre, lo que sugiere menor dinamismo en la demanda interna al inicio del cuarto trimestre de este año. En conjunto, estos resultados revelan un panorama económico caracterizado por bajo crecimiento, amplia heterogeneidad sectorial y un mercado interno que continúa mostrando signos de debilidad estructural.
+
+### Justificación del tema
+
+El análisis econométrico de la demanda interna resulta fundamental para comprender el desempeño reciente de la economía mexicana y sus perspectivas de crecimiento. Dado que la demanda interna constituye uno de los motores principales de la actividad económica a través del consumo y la inversión, puesto quesu comportamiento tiene efectos directos sobre la generación de empleo, la producción y el bienestar de los hogares.
+
+En los últimos años, la economía mexicana ha mostrado signos de desaceleración y debilidad estructural, reflejados en un crecimiento moderado del consumo privado, una caída en la inversión fija y un entorno de incertidumbre comercial que limita la expansión del gasto.
+
+El presente proyecto justifica su importancia en que ofrece un análisis conjunto de variables macroeconómicas como el consumo privado, el Índice Nacional de Precios al Consumidor (INPC), el Indicador Global de la Actividad Económica (IGAE), los salarios mínimos, la TIIE a 28 días, el número de personas desocupadas y la Tasa de Condiciones Críticas de Ocupación (TCCO). Estas variables no solo contribuyen a una comprensión más profunda del estado actual de la economía, sino que también pueden servir como apoyo para la toma de decisiones de política económica orientadas a impulsar el crecimiento, fortalecer el consumo interno y promover una mayor estabilidad económica.
+
+Por ello, este proyecto es relevante tanto desde una perspectiva académica como práctica, ya que ofrece un análisis integral que ayuda a entender cómo se conectan y afectan entre sí las principales variables económicas del país.
+
+## Hipótesis del proyecto
+
+> *“Las variaciones en la inflación (INPC), la actividad económica (IGAE), la tasa de interés (TIIE a 28 días), los salarios mínimos, el tipo de cambio y el nivel de desocupación influyen de manera significativa en el comportamiento del consumo privado en México.”*
+
+## Descripción de los datos y fuentes
+
+Para la realización de este proyecto se utilizaron siete variables de la economía mexicana con frecuencia mensual, las series abarcan del primero de enero de 2005 al primero de agosto de 2025. Todas las variables empleadas provienen de instituciones públicas reconocidas, lo que garantiza su confiabilidad y validez estadística. A continuación, se describe cada una de ellas:
+
+  1. **Consumo privado**: Es la información que mide la evolución del gasto realizado por los hogares en bienes y servicios de consumo, tanto de origen nacional como importado.
+      - Fuente: INEGI
+      
+                De Estadística Y Geografía, I. N. (n.d.). Consumo privado. https://www.inegi.org.mx/temas/imcp/
+                
+      
+  2. **Índice Nacional de Precios al Consumidor**: El INPC mide la variación de los precios de una canasta de bienes y servicios representativa del consumo de los hogares mexicanos.
+      - Fuente: INEGI
+      
+                De Estadística Y Geografía, I. N. (n.d.). Índice Nacional de Precios al Consumidor (INPC). Base 2a Quincena Julio 2018. Actualización de Canasta y Ponderadores 2024. https://www.inegi.org.mx/temas/inpc/
+                
+      
+  3. **Indicador Global de la Actividad Económica**: Permite conocer y dar seguimiento a la evolución mensual del sector real de la economía.
+      - Fuente: INEGI
+      
+                De Estadística Y, I. N. (n.d.). Indicador Global de la Actividad Económica. https://www.inegi.org.mx/temas/igae/
+      
+      
+  4. **Salarios Mínimos**: Representa el ingreso laboral básico establecido por la Comisión Nacional de los Salarios Mínimos.
+      - Fuente: Banco de México, CONASAMI
+      
+                Estructura de información (SIE, Banco de México). (n.d.). https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?accion=consultarCuadro&idCuadro=CL289&locale=es
+                
+                De Los Salarios Mínimos, C. N. (n.d.). Evolución del Salario Mínimo. gob.mx. https://www.gob.mx/conasami/documentos/evolucion-del-salario-minimo
+      
+      
+  5. **TIIE a 28 días**: Es una de las principales tasas de referencia del sistema financiero mexicano y refleja las condiciones monetarias vigentes.
+      - Fuente: Banco de México
+      
+                Estructura de información (SIE, Banco de México). (n.d.). https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?accion=consultarCuadro&idCuadro=CL289&locale=es
+      
+      
+  6. **Tasa de desocupación**: Indica el número de personas que no cuentan con empleo pero buscan activamente uno.
+      - Fuente: INEGI
+      
+                De Estadística Y Geografía, I. N. (n.d.). Empleo y ocupación. https://www.inegi.org.mx/temas/empleo/
+                
+                
+  7. **Tasa de Condiciones Críticas de Ocupación**: La TCCO funciona como un indicador de precariedad laboral, ya que muestra la parte de la población que, aun estando ocupada, enfrenta condiciones insuficientes de empleo o remuneración.
+      - Fuente: INEGI
+      
+                De Estadística Y Geografía, I. N. (n.d.). Banco de Información Económica (BIE). https://www.inegi.org.mx/app/indicadores/?tm=0&ind=444608#D444608_10000080018000700210
+  
+  
+## Estadística descriptiva
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE)
+```
+<!--
+Carga de paqueterías y librerías a utilizar
+-->
+```{r, echo=FALSE}
+library(readxl)
+library(dplyr)
+library(psych)
+library(urca)
+library(vars)
+library(corrplot)
+library(lubridate)
+library(ggplot2)
+library(tidyr)
+library(tseries)
+library(DiagrammeR)
+library(knitr)
+```
+<!--
+### Carga de datos
+-->
+```{r, echo=FALSE}
+ruta <- "C:/BUAP/Econometría II. 25-2/Proyecto/Variables.xlsx"  # SHER
+#ruta <- "C:/Users/pacos/Documents/Econometria II/Proyecto/Variables.xlsx" # PACO
+
+# extraemos las variables y las tratamos, decidimos utilizar las series a partir del 2005
+# 1. CONSUMO PRIVADO, la base de datos inicia desde enero de 1993 a agosto 2025
+consumo <- read_excel(ruta, sheet = 2, skip = 17)
+consumo <- consumo[ , -1] # elimina la primera columna
+names(consumo)[1] <- "Consumo_Privado"
+consumo1 <- as.numeric(consumo[[1]])
+Consumo_Priv <- ts(consumo1, start = c(1993,1), end = c(2025,8), frequency = 12)
+Consumo_Priv <- window(Consumo_Priv, start = c(2005,1))
+
+# 2. INPC, base de datos de enero 1970 a octubre 2025
+inpc <- read_excel(ruta, sheet = 3, skip = 12)
+inpc <- inpc[,2]      # selecciona la columna a trabajar
+inpc <- head(inpc,-4) # elimina las últimas 4 filas
+names(inpc)[1] <- "INPC"
+inpc1 <- as.numeric(inpc[[1]])
+INPC <- ts(inpc1, start = c(1970,1), end = c(2025,10), frequency = 12)
+INPC <- window(INPC, start = c(2005,1), end = c(2025,8))
+
+# 3. IGAE, serie de enero 1993 a agosto 2025
+igae <- read_excel(ruta, sheet = 4, .name_repair = "minimal")
+igae <- igae[7, ]
+igae <- igae[, -1]
+indices <- rep(c(rep(TRUE, 12), FALSE), length.out = ncol(igae))
+igae <- igae[, indices]
+igae <- data.frame(t(igae))
+names(igae)[1] <- "IGAE"
+igae1 <- as.numeric(igae[[1]])
+IGAE <- ts(igae1, start = c(1993,1), end = c(2025,8), frequency = 12)
+IGAE <- window(IGAE, start = c(2005,1))
+
+# 4. SALARIOS MÍNIMOS, serie de enero 1969 a septiembre 2025
+salarios <- read_excel(ruta, sheet = 5, skip = 17)
+salarios <- salarios[, -1]
+names(salarios)[1] <- "Salarios_Mínimos"
+salarios1 <- as.numeric(salarios[[1]])
+Salario_Min <- ts(salarios1, start = c(1969,1), end = c(2025, 9), frequency = 12)
+Salario_Min <- window(Salario_Min, start = c(2005,1), end = c(2025,8))
+
+# 5. TIIE A 28 DÍAS, serie del 23 de marzo de 1995 al 18 de noviembre de 2025
+# los datos son de frecuencia diario, por ello consideramos el último dato del mes como la tasa mensual, para así obtener una frecuncia mensual.
+tiie <- read_excel(ruta, sheet = 6, skip = 17)
+names(tiie)[2] <- "TIIE_28"
+tiieM <- tiie %>%
+  mutate(Fecha = as.Date(Fecha)) %>%
+  group_by(year = year(Fecha), month = month(Fecha)) %>%
+  summarise(TIIE_28 = last(TIIE_28), .groups = "drop") %>%
+  mutate(Fecha = as.Date(paste(year, month, "01", sep = "-")))
+tiieM <- tiieM[, 3]
+tiie1 <- as.numeric(tiieM[[1]])
+TIIE <- ts(tiie1, start = c(1995,3), end = c(2025,11), frequency = 12)
+TIIE <- window(TIIE, start = c(2005,1), end = c(2025,8))
+
+# 6. PERSONAS DESOCUPADAS, serie de enero 2005 a septiembre 2025
+desocupadas <- read_excel(ruta, sheet = 7, .name_repair = "minimal")
+desocupadas <- desocupadas[9, ]
+desocupadas <- desocupadas[, -c(1,2)]
+desocupadas <- data.frame(t(desocupadas))
+names(desocupadas)[1] <- "Personas_Desocupadas"
+desocupadas1 <- as.numeric(desocupadas[[1]])
+Tasa_Desocup <- ts(desocupadas1, start = c(2005,1), end = c(2025,9), frequency = 12)
+Tasa_Desocup <- window(Tasa_Desocup, end = c(2025,8))
+
+# 7. TCCO, serie de enero 2005 a septiembre 2025
+tcco <- read_excel(ruta, sheet = 8, skip = 4)
+tcco <- tcco[, -1]
+tcco <- head(tcco, -8)
+names(tcco)[1] <- "TCCO"
+tcco1 <- as.numeric(tcco[[1]])
+TCCO <- ts(tcco1, start = c(2005,1), end = c(2025,9), frequency = 12)
+TCCO <- window(TCCO, end = c(2025,8))
+```
+
+### Series originales
+#### Tratamiento de variables y descripción
+```{r, echo=FALSE}
+# 1. Validación de ausencia de NA's
+cat("NAs en Consumo:", sum(is.na(Consumo_Priv)), "\n")
+cat("NAs en INPC:", sum(is.na(INPC)), "\n")
+cat("NAs en IGAE:", sum(is.na(IGAE)), "\n")
+cat("NAs en Salarios:", sum(is.na(Salario_Min)), "\n")
+cat("NAs en TIIE:", sum(is.na(TIIE)), "\n")
+cat("NAs en Desocupación:", sum(is.na(Tasa_Desocup)), "\n")
+cat("NAs en TCCO:", sum(is.na(TCCO)), "\n")
+
+# 2. Unificar la series en un data frame
+data <- data.frame(
+  Fecha = seq(as.Date("2005-01-01"), by = "month", length.out = length(Consumo_Priv)),
+  Consumo_Privado = as.numeric(Consumo_Priv),
+  INPC = as.numeric(INPC),
+  IGAE = as.numeric(IGAE),
+  Salario_Min = as.numeric(Salario_Min),
+  TIIE = as.numeric(TIIE),
+  Tasa_Desocup = as.numeric(Tasa_Desocup),
+  TCCO = as.numeric(TCCO)
+)
+describe(data[, -1])
+```
+
+
+#### Gráficas
+
+```{r, echo=FALSE}
+# Gráfica exploratoria
+par(mfrow = c(4, 2), mar = c(2, 2, 2, 1))
+plot(Consumo_Priv, main="Consumo Privado (índices)")
+plot(INPC, main="INPC (índices)")
+plot(IGAE, main="IGAE (índices)")
+plot(Salario_Min, main="Salarios Mínimos (índices)")
+plot(TIIE, main="TIIE a 28 días (mensual %)")
+plot(Tasa_Desocup, main="Personas Desocupadas(%)")
+plot(TCCO, main="TCCO (%)", ylab="", xlab="Año")
+```
+
+
+La Figura 1 presenta la evolución temporal de las variables macroeconómicas consideradas en el análisis para el periodo enero de 2005 a agosto de 2025. En general, todas las series muestran un comportamiento característico de datos no estacionarios, con tendencias marcadas o cambios estructurales, lo cual es consistente con la evidencia empírica habitual en series económicas de mediano y largo plazo.
+
+En el caso del Consumo Privado, se observa una trayectoria ascendente estable con oscilaciones de corto plazo y una caída abrupta en 2020 asociada a la contracción económica derivada de la pandemia por COVID-19. El INPC presenta una tendencia claramente creciente, reflejo del aumento sostenido en el nivel general de precios, sin episodios significativos de reversión a la media. El IGAE sigue una dinámica similar al consumo, con tendencia positiva y una caída puntual en 2020, consistente con la desaceleración económica nacional.
+
+El Salario Mínimo muestra incrementos escalonados y pronunciados a partir de 2018, derivados de las políticas de recuperación salarial implementadas en México en ese periodo. Por su parte, la TIIE a 28 días evidencia movimientos cíclicos asociados a la postura monetaria del Banco de México, destacando periodos de relajación (2014–2015, 2019–2020) y fases contractivas (2016–2017, 2021–2023).
+
+La Tasa de Desocupación presenta variaciones moderadas en torno a un nivel relativamente estable, con incrementos durante episodios de estrés económico como la crisis de 2009 y la pandemia de 2020. Finalmente, la TCCO revela una trayectoria descendente en la primera mitad del periodo, seguida de fluctuaciones asociadas a condiciones de liquidez en el sistema financiero.
+
+
+### Series con tratamiento
+
+```{r, echo=FALSE}
+# 1. Aplicamos logaritmo a las primeras 4 variables, las últimas 3 están en porcentaje, por lo que no es necesario.
+variables4 <- c("Consumo_Privado", "INPC", "IGAE", "Salario_Min")
+data_log <- data %>%
+  mutate(across(all_of(variables4), log, .names = "{col}"))
+
+# 2. Realizamos las diferencias
+data2 <- data_log %>%
+  mutate(across(-Fecha, ~ c(NA, diff(.)), .names = "{col}"))
+data2 <- na.omit(data2) # ahora la serie inicia en febrero 2005
+describe(data2[, -1])
+```
+
+
+Con el propósito de preparar las series para el análisis econométrico y garantizar la validez de los modelos empleados, se aplicaron dos transformaciones estándar en series económicas: logaritmos y primeras diferencias.
+
+En primer lugar, se aplicó logaritmo natural a las variables expresadas como índices (Consumo Privado, INPC, IGAE y Salario Mínimo). Esta transformación permite interpretar las variaciones como tasas de crecimiento aproximadas, reduce la heterocedasticidad y suaviza la tendencia en series cuya escala aumenta de manera exponencial. Las variables expresadas como porcentajes (TIIE, Tasa de Desocupación y TCCO) no requieren logaritmización, ya que su magnitud no está sujeta a crecimiento exponencial.
+
+Posteriormente, se calcularon las primeras diferencias de todas las series mediante la función diff(). Esta transformación es fundamental para atender la presencia de tendencias estocásticas y eliminar raíces unitarias, lo cual contribuye a obtener series estacionarias en media y varianza. Tras eliminar la primera observación perdida por la diferenciación, las series transformadas abarcan el periodo febrero de 2005 a agosto de 2025.
+
+
+### Gráficas
+
+```{r, echo=FALSE}
+data_dl <- data2 %>%
+  pivot_longer(-Fecha, names_to = "Variable", values_to = "Valor")
+
+ggplot(data_dl, aes(x = Fecha, y = Valor, color = Variable)) +
+  geom_line() +
+  facet_wrap(~ Variable, scales = "free_y", ncol = 2) +
+  theme_minimal() +
+  labs(title = "Series en logaritmos y diferencias",
+       x = "Fecha", y = "Valor")
+```
+
+
+La Figura 2 muestra la evolución de las siete variables económicas después de aplicarles las transformaciones de logaritmo (en el caso de las series expresadas como índices) y primera diferencia. Estas series representan, en términos prácticos, las tasas de crecimiento mensual o cambios porcentuales aproximados de cada variable, lo cual es fundamental para analizar su dinámica de corto plazo y evaluar su estacionariedad.
+
+En las gráficas se observa que todas las series transformadas oscilan alrededor de un valor promedio cercano a cero, lo cual es característico de procesos estacionarios. La volatilidad es moderada en la mayoría de los casos, salvo en el salario mínimo, donde se aprecian incrementos puntuales que corresponden a ajustes anuales discretos. La TIIE y el TCCO presentan episodios de mayor variabilidad, asociados a cambios en las condiciones de política monetaria y en la liquidez del sistema financiero.
+
+
+```{r, echo=FALSE}
+# Histogramas 
+ggplot(data_dl, aes(x = Valor)) +
+  geom_histogram(aes(y = ..density..), bins = 30, fill = "gray", color = "black") +
+  geom_density(color = "firebrick", lwd = 1) +
+  facet_wrap(~ Variable, scales = "free", ncol = 2) +
+  theme_minimal()
+```
+
+
+La Figura 3 presenta los histogramas y las funciones de densidad suavizadas para las siete series de tiempo transformadas mediante primeras diferencias (o diferencias logarítmicas, según corresponda). Estas distribuciones permiten evaluar el comportamiento probabilístico de las series en su forma estacionaria y determinar si presentan características compatibles con los supuestos de modelos econométricos lineales.
+
+En la mayoría de las variables, particularmente Consumo Privado, IGAE, INPC y TIIE, las distribuciones muestran forma aproximadamente simétrica alrededor de cero, con colas moderadas y ausencia de asimetrías pronunciadas. Esto es consistente con la dinámica de cambios mensuales en series macroeconómicas y respalda la hipótesis de que las transformaciones aplicadas lograron eliminar tendencias estocásticas, dejando series centradas y más cercanas a procesos estacionarios.
+
+### Correlaciones
+
+```{r, echo=FALSE}
+correlaciones <- cor(data2[ , -1])
+correlaciones
+```
+
+
+Se observa una correlación positiva elevada entre Consumo Privado e IGAE (0.8648), lo cual es consistente con la relación macroeconómica entre actividad económica y demanda agregada: incrementos en la actividad productiva suelen estar asociados con mayores niveles de consumo. Esta fuerte correlación es una primera señal de que podría existir una relación de equilibrio a largo plazo entre estas variables, aspecto que posteriormente será explorado mediante pruebas de cointegración.
+
+La Tasa de Desocupación presenta correlaciones negativas moderadas con Consumo (-0.39) e IGAE (-0.45), reflejando el comportamiento contra cíclico del desempleo: una menor actividad económica o menores niveles de consumo suelen estar asociados con aumentos en la desocupación.
+
+El Salario Mínimo exhibe correlaciones bajas con la mayoría de las variables, excepto con la TCCO (0.59), lo cual se explica por el hecho de que ambas series presentan cambios discretos y no necesariamente sincronizados con el ciclo económico mensual. Por su parte, las correlaciones de la TIIE con el resto de las series son bajas, lo que es congruente con la naturaleza de la política monetaria: los ajustes de tasas no suelen generar cambios inmediatos de un mes a otro en las variables reales.
+
+En conjunto, la matriz de correlaciones revela que existen relaciones significativas entre algunas variables clave, particularmente entre Consumo, IGAE y Desocupación, lo que respalda el uso de modelos dinámicos multivariados y motiva la posterior evaluación formal de cointegración para determinar si estas variables comparten relaciones de equilibrio de largo plazo.
+
+
+```{r, echo=FALSE}
+corrplot(correlaciones, method = "color", tl.cex = 0.8)
+```
+
+
+### Pruebas de estacionariedad
+
+```{r, include=FALSE}
+pruebas_estacionariedad <- function(x){
+  adf <- ur.df(x, type = "drift", selectlags = "AIC")
+  kpss <- kpss.test(x, null = "Level")
+  
+  return(list(
+    ADF = summary(adf),
+    KPSS = kpss
+  ))
+}
+resultados <- lapply(data2[ , -1], pruebas_estacionariedad)
+names(resultados) <- colnames(data2[, -1])
+resultados
+```
+
+
+Con el objetivo de determinar el orden de integración de cada variable y verificar la estacionariedad de las series transformadas, se aplicaron las pruebas Augmented Dickey-Fuller (ADF) y KPSS a las primeras diferencias (o diferencias de logaritmos, según el caso).
+
+En todos los casos, los resultados muestran valores estadísticos ADF altamente negativos y muy por debajo de los valores críticos al 1%, 5% y 10%, lo cual indica que se rechaza la hipótesis nula de raíz unitaria. Esto confirma que las series diferenciadas son estacionarias.
+
+De manera complementaria, las pruebas KPSS no rechazan la hipótesis nula de estacionariedad, ya que los valores estadísticos obtenidos se encuentran dentro de los rangos aceptables para niveles de significancia estándar. Esto refuerza la conclusión de que las primeras diferencias de todas las variables son I(0).
+
+La combinación de ambas pruebas, ADF para raíz unitaria y KPSS para estacionariedad, proporciona evidencia robusta de que todas las series son integradas de orden uno (I(1)) en niveles, pero estacionarias tras aplicar una primera diferencia. Este resultado es consistente con el comportamiento observado en las gráficas exploratorias y con la naturaleza típica de series macroeconómicas.
+
+
+| Variable          | ADF (diferencias) | KPSS (diferencias)                     | ¿Estacionaria? | Orden |
+| ----------------- | ----------------- | -------------------------------------- | -------------- | ----- |
+| Consumo           | Rechaza H0 (I(0)) | No rechaza H0                          |  Sí           | I(1)  |
+| INPC              | Rechaza H0        | No rechaza H0                          |  Sí           | I(1)  |
+| IGAE              | Rechaza H0        | No rechaza H0                          |  Sí           | I(1)  |
+| Salario Mínimo    | Rechaza H0        | *KPSS ligeramente alta pero aceptable* |  Sí           | I(1)  |
+| TIIE              | Rechaza H0        | No rechaza H0                          |  Sí           | I(1)  |
+| Tasa Desocupación | Rechaza H0        | No rechaza H0                          |  Sí           | I(1)  |
+| TCCO              | Rechaza H0        | No rechaza H0                          |  Sí           | I(1)  |
+
+
+
+### ACF y PACF
+
+```{r, fig.width=8, fig.height=12, echo=FALSE}
+par(mfrow = c(4, 2), mar = c(4, 4, 4, 2))  
+# mar = c(inf, dcha, sup, izq)
+
+for (v in colnames(data2[, -1])) {
+  acf(data2[[v]], main = paste("ACF:", v))
+  pacf(data2[[v]], main = paste("PACF:", v))
+}
+#par(mfrow = c(1,1))
+```
+
+
+Este análisis permite evaluar si persiste dependencia serial en los cambios mensuales de cada variable y proporciona información relevante para determinar el número adecuado de rezagos en modelos multivariados como VAR o VEC.
+
+En general, las ACF de todas las series muestran un comportamiento consistente con procesos estacionarios: la autocorrelación decae rápidamente hacia cero y únicamente los primeros rezagos presentan valores significativos. Esto es particularmente evidente en Consumo Privado, IGAE, TIIE y Tasa de desocupación, donde la ACF presenta un patrón de disminución exponencial, típico de procesos ARMA o de componentes de ruido blanco una vez eliminada la tendencia.
+
+Las PACF, por su parte, exhiben picos aislados en los primeros rezagos, pero no mantienen significancia sistemática a lo largo de los rezagos superiores. Esto refuerza la idea de que las series diferenciadas no presentan dependencia prolongada y que los efectos dinámicos de corto plazo son acotados. El caso del Salario Mínimo muestra un pico aislado más pronunciado, asociado a los ajustes estructurales que la serie experimenta anualmente.
+
+
+## Modelación econométrica
+
+```{r, echo=FALSE}
+vars_select <- VARselect(data_log[, -1], lag.max = 12, type = "const")
+vars_select$selection
+```
+
+
+Para determinar el número óptimo de rezagos del modelo multivariado, se aplicó el procedimiento de selección VARselect utilizando los criterios de información AIC, HQ, SC y FPE. Los resultados mostraron diferencias entre criterios: el AIC y el FPE sugirieron un modelo con 12 rezagos, mientras que los criterios HQ y SC recomendaron 4 y 2 rezagos, respectivamente.
+
+En el contexto de modelos multivariados para series macroeconómicas de alta frecuencia (mensual), es habitual que el AIC recomiende un mayor número de rezagos, ya que este criterio penaliza en menor medida la inclusión de parámetros adicionales. La literatura aplicada suele favorecer el uso del AIC para los modelos de cointegración de Johansen, dado que una menor cantidad de rezagos puede subespecificar el sistema y conducir a la pérdida de relaciones dinámicas relevantes entre las variables.
+
+Considerando que las series empleadas abarcan un periodo suficientemente amplio y que la dinámica económica mensual puede requerir capturar efectos rezagados de hasta un año, se decidió utilizar K = 12 rezagos para la prueba de cointegración de Johansen. Esta elección permite representar adecuadamente las interacciones de corto y mediano plazo sin comprometer la validez del modelo.
+
+
+```{r, echo=FALSE}
+joh <- ca.jo(
+  data_log[, -1],      # todas las variables, menos Fecha
+  type = "trace",      # prueba de traza
+  ecdet = "const",     # constante en el espacio de cointegración
+  K = 12               # rezagos sugeridos por AIC
+)
+
+summary(joh)
+```
+
+Para evaluar la presencia de relaciones de equilibrio de largo plazo entre las variables macroeconómicas consideradas, se aplicó la prueba de cointegración de Johansen bajo el enfoque del estadístico de traza. Los resultados indican que el estadístico para la hipótesis nula de ausencia de cointegración (r = 0) es de 248.08, valor ampliamente superior al crítico al 5% (131.70), por lo que se rechaza la hipótesis nula.
+
+De manera similar, la hipótesis r ≤ 1 también es rechazada, dado que el estadístico (106.31) supera el valor crítico al 5% (102.14). Sin embargo, la hipótesis r ≤ 2 no es rechazada, ya que el estadístico correspondiente (73.83) se encuentra por debajo del valor crítico (76.07).
+
+En conjunto, estos resultados indican la presencia de dos vectores de cointegración (r = 2) entre las variables del sistema. Esto implica que las series comparten relaciones de equilibrio de largo plazo y que las dinámicas de corto y largo plazo deben modelarse de manera conjunta. Por tanto, el modelo econométrico apropiado para capturar estas interdependencias es un Modelo de Corrección de Error Multivariado (VEC), en lugar de un VAR en primeras diferencias.
+
+```{r, echo=FALSE}
+# Estimar el modelo VECM con r = 2
+vecm <- cajorls(joh, r = 2)
+```
+
+```{r, echo=FALSE}
+# Mostrar resultados completos
+summary(vecm)
+#summary(vecm$rlm)
+```
+
+A partir de la estimación del modelo VECM con r = 2 relaciones de cointegración, se analizó el mecanismo de corrección de error para identificar qué variables ajustan a los desvíos del equilibrio de largo plazo. Los coeficientes asociados a los términos de corrección (ect1 y ect2) muestran que solamente algunas variables presentan un proceso significativo de ajuste.
+
+En particular, el Salario Mínimo, la Tasa de Desocupación y el Índice de Confianza del Consumidor (TCCO) presentan coeficientes de corrección negativos y estadísticamente significativos, indicando que estas variables responden de forma sistemática ante desequilibrios del sistema, corrigiendo aproximadamente el 44%, 167% y 1050% del desvío del equilibrio en cada periodo, respectivamente. Esto sugiere que estos indicadores contienen mecanismos de reacción propios del mercado laboral y las expectativas económicas.
+
+Por el contrario, Consumo Privado, INPC, IGAE y TIIE no presentan coeficientes de corrección significativos, lo que indica que estas variables no ajustan en el largo plazo y se comportan como débilmente exógenas dentro del sistema cointegrado.
+
+```{r, include=FALSE}
+companion <- eigen(joh@V)$values
+companion
+```
+
+```{r, include=FALSE}
+joh2 <- ca.jo(data_log[, -1], type = "trace", ecdet = "none", K = 3)
+summary(joh2)
+
+vecm2 <- cajorls(joh2, r = 2)  # si r=2 sigue siendo válido
+summary(vecm2$rlm)
+
+companion2 <- eigen(joh2@V)$values
+companion2
+```
+
+```{r, echo=FALSE}
+summary(joh2)
+```
+
+
+Durante la estimación inicial se planteó un modelo VECM multivariado con siete variables macroeconómicas. Sin embargo, el análisis de estabilidad del sistema mostró que varios de los valores propios (eigenvalues) tenían módulos mayores a uno. Este resultado implica que el sistema es inestable, por lo que las dinámicas del modelo divergen y no es posible realizar interpretaciones válidas, obtener funciones de impulso-respuesta o generar pronósticos confiables.
+
+La causa de esta inestabilidad suele deberse a que los sistemas con muchas variables, especialmente series macroeconómicas altamente correlacionadas, generan estructuras dinámicas demasiado complejas que impiden la convergencia. Además, el examen de los coeficientes de ajuste (matriz α) mostró que varias variables no responden a los desequilibrios de largo plazo, lo que indica que se comportan como débilmente exógenas en el mecanismo de corrección de errores.
+
+Para resolver este problema, se decidió reducir el tamaño del sistema, manteniendo únicamente las variables que sí presentan mecanismos de ajuste significativos y que además son relevantes para la dinámica macroeconómica analizada. Con base en los resultados de la matriz α y en criterios teóricos, se seleccionaron las siguientes cuatro variables:
+
+*Consumo Privado*
+
+*Salario Mínimo*
+
+*Tasa de Desocupación*
+
+*Índice de Confianza del Consumidor (TCCO)*
+
+Esta selección permite conservar la variable objetivo del estudio (Consumo Privado) y, al mismo tiempo, mantener variables que muestran un ajuste significativo al equilibrio de largo plazo. El sistema reducido facilita obtener un modelo VECM estable.
+
+
+```{r, include=FALSE}
+# 1. Seleccionar solo 4 variables
+data_sub <- dplyr::select(data, Fecha, Consumo_Privado, Salario_Min, Tasa_Desocup, TCCO)
+
+# 2. Transformaciones (log solo para variables económicas reales)
+data_log4 <- data_sub %>%
+  mutate(
+    Consumo_Privado = log(Consumo_Privado),
+    Salario_Min = log(Salario_Min)
+  )
+
+# 3. Construir primeras diferencias
+data_d4 <- data_log4 %>%
+  mutate(across(-Fecha, ~ c(NA, diff(.)), .names = "{col}.d")) %>%
+  na.omit()
+
+# 4. Selección de rezagos óptimos
+lag_test <- VARselect(data_d4[, -1], lag.max = 12, type = "const")
+lag_test
+# resultado para determinar el valor final de K
+
+# 5. Test de cointegración de Johansen
+# el valor de K se modificará cuando se determine a partir del VARselect
+johansen4 <- ca.jo(
+  data_log4[, -1],
+  type = "trace",
+  ecdet = "const",
+  K = 4
+)
+summary(johansen4)
+
+# 6. Estimar el VECM
+vecm4 <- cajorls(johansen4, r = 1)
+summary(vecm4$rlm)
+
+# 7. Convertir VECM a VAR para IRFs y pronósticos
+vec4_var <- vec2var(johansen4, r = 1)
+```
+
+```{r}
+lag_test
+summary(johansen4)
+```
+
+```{r, include=FALSE}
+# Estabilidad del sistema con 4 variables usando un VAR(1)
+
+# 1. Subconjunto con 4 variables en diferencias
+data4 <- data2 %>%
+  dplyr::select(Fecha, Consumo_Privado, Salario_Min, Tasa_Desocup, TCCO)
+
+# 2. Usamos p = 1 por recomendación de HQ y SC
+p_opt <- 1
+
+# 3. Estimación VAR(1)
+var4 <- VAR(data4[, -1], p = p_opt, type = "const")
+
+# 4. Obtener raíces y módulos
+eig_var4 <- roots(var4)
+Mod(eig_var4)
+```
+
+```{r}
+Mod(eig_var4)
+```
+
+```{r, echo=FALSE}
+# 5. Graficar módulos
+plot(Mod(eig_var4), pch = 19,
+     ylab = "Módulo de las raíces",
+     xlab = "Índice de raíz",
+     main = "Estabilidad del VAR(1) con 4 variables")
+abline(h = 1, lty = 2)
+```
+
+Se estimó un modelo VAR(1) en primeras diferencias para el subconjunto de variables (Consumo Privado, Salario Mínimo, Tasa de Desocupación y TCCO). Para evaluar la estabilidad del sistema se calcularon las raíces del polinomio característico del VAR.
+
+Los módulos de las raíces fueron menores que uno (0.506, 0.326, 0.326, 0.093), lo cual indica que el sistema dinámico es estable. Esta condición garantiza que las funciones impulso-respuesta y la descomposición de varianza pueden interpretarse correctamente, y que el proceso no diverge ante perturbaciones temporales.
+
+
+### Selección del modelo econométrico final
+
+Inicialmente se evaluó la posibilidad de utilizar un modelo VECM, ya que las variables presentan indicios de cointegración según la prueba de Johansen. Sin embargo, al estimar distintos VECM con el conjunto completo de variables y con subconjuntos reducidos, los modelos resultaron inestables (raíces fuera del círculo unitario), impidiendo una interpretación válida de las relaciones de largo plazo.
+
+Ante la falta de un VECM estable, se aplicó la estrategia estándar en econometría de pasar a un modelo VAR en primeras diferencias. Para ello se realizaron transformaciones de logaritmo, diferenciación y selección de rezagos, además de una reducción de dimensionalidad basada en criterios de información. Con este proceso se obtuvo un VAR(1) parsimonioso y estable, adecuado para analizar las relaciones dinámicas de corto plazo entre las variables seleccionadas.
+
+```{r}
+# Autocorrelación de los residuales
+serial.test(var4, lags.pt = 12, type = "PT.asymptotic")
+
+# Normalidad de los residuales
+normality.test(var4)
+
+# Heterocedasticidad ARCH
+arch.test(var4, lags.multi = 12)
+```
+
+Se realizaron los diagnósticos del VAR(1) estimado. El test de Portmanteau indicó la presencia de autocorrelación en los residuales, mientras que la prueba de Jarque-Bera mostró que éstos no siguen una distribución normal. Adicionalmente, el test ARCH evidenció heterocedasticidad en la varianza. Aunque estas condiciones se alejan del supuesto clásico de ruido blanco, son patrones comunes en series macroeconómicas mensuales y no invalidan el uso del VAR; únicamente sugieren que las perturbaciones presentan comportamiento dinámico más complejo.
+
+```{r}
+# IRF general del VAR(1)
+irf_var4 <- irf(
+  var4,
+  impulse = colnames(data_sub)[-1],   # todas las variables excepto Fecha
+  response = colnames(data_sub)[-1],  # todas las variables
+  n.ahead = 24,       # horizonte de 24 meses
+  boot = TRUE,        # intervalos por bootstrap
+  runs = 200
+)
+```
+
+```{r, echo=FALSE}
+# Se decidió realizar el IRF de manera individual, puesto que la carga de gráficas demanda mucho ram
+variables <- colnames(var4$y) # nombre de las variables
+
+# IRF de cada variable
+for (imp in variables) {
+  for (resp in variables) {
+    
+    irf_ind <- irf(
+      var4,
+      impulse = imp,
+      response = resp,
+      n.ahead = 24,
+      boot = TRUE
+    )
+    
+    plot(irf_ind)
+  }
+}
+```
+
+Se estimaron funciones impulso–respuesta (IRF) para analizar la dinámica de corto plazo entre las variables seleccionadas. En general, las respuestas obtenidas fueron estables y convergentes, lo que confirma la validez del VAR(1).
+
+Un impulso en Consumo Privado genera efectos pequeños y transitorios sobre el resto de las variables, lo que sugiere que su influencia en el sistema es limitada. Por el contrario, un shock en el Salario Mínimo produce una reducción temporal en la TCCO, indicando un vínculo entre política salarial y condiciones financieras.
+
+También se observó que un aumento inesperado en la Tasa de Desocupación reduce el Consumo Privado y altera ligeramente las demás variables, lo que es consistente con el efecto contractivo del desempleo sobre la actividad económica. Finalmente, un shock en TCCO genera principalmente un ajuste autorregresivo dentro de la propia tasa y efectos muy moderados sobre consumo y salarios.
+
+```{r, results='hide'}
+# FEVD a 24 periodos
+fevd_var4 <- fevd(var4, n.ahead = 24)
+
+# VResultados de cada ecuación
+fevd_var4
+```
+
+La descomposición de varianza del modelo VAR(1) muestra el grado en que los errores de pronóstico de cada variable son explicados por shocks propios y por innovaciones provenientes del resto del sistema. Los resultados indican que:
+
+* Consumo Privado es altamente inercial: aproximadamente 80 % de su variabilidad futura proviene de sí mismo. El Salario Mínimo explica cerca del 18 %, mientras que la Tasa de Desocupación y el TCCO aportan menos del 2 %. Esto indica que el consumo responde principalmente a sus propios ciclos, con una influencia secundaria del salario.
+
+* Salario Mínimo es la variable más autónoma del sistema, con más del 92 % de su variabilidad explicada por shocks propios. El Consumo Privado explica cerca del 5 %, mientras que el resto de las variables tienen efectos marginales. Esto sugiere una dinámica casi independiente dentro del sistema.
+
+* Tasa de Desocupación muestra una fuerte sensibilidad a las demás variables: aunque alrededor del 73 % se explica por sí misma, cerca del 23 % proviene del Consumo Privado, y alrededor del 4 % del Salario Mínimo. Esto confirma que la actividad económica y el mercado laboral están fuertemente interconectados.
+
+* TCCO es la variable más influenciada por el sistema: alrededor del 53 % se explica por shocks propios, mientras que el Salario Mínimo aporta cerca del 35 %, el Consumo Privado alrededor del 10 %, y la Tasa de Desocupación cerca del 2 %. Esto implica que TCCO responde de forma notable a la política salarial y a las condiciones económicas generales.
+
+En conjunto, los resultados del FEVD muestran que Consumo Privado y Salario Mínimo son relativamente exógenos, mientras que Tasa de Desocupación y TCCO son claramente endógenos, confirmando la estructura dinámica detectada en los IRFs y fortaleciendo la validez del modelo VAR estimado.
+
+## Proyección 
+```{r, echo=FALSE, results='asis'}
+# Pronóstico a 3 meses
+forecast_var4 <- predict(var4, n.ahead = 6)
+
+for (var in names(forecast_var4$fcst)) {
+  tabla <- data.frame(
+    Forecast = round(forecast_var4$fcst[[var]][,1], 4),
+    Lower    = round(forecast_var4$fcst[[var]][,2], 4),
+    Upper    = round(forecast_var4$fcst[[var]][,3], 4)
+  )
+  
+  cat(paste0("### Pronóstico para ", var, "\n\n"))
+  
+  print(kable(tabla, caption = paste("Pronóstico para", var)))
+  
+  cat("\n\n")
+}
+```
+
+```{r, echo=FALSE}
+plot_var_forecast <- function(forecast_var, original_series, variable_name) {
+
+  # Extraer forecast de una variable
+  f <- forecast_var$fcst[[variable_name]]
+
+  # Crear data frame del pronóstico
+  df_forecast <- data.frame(
+    time = max(time(original_series)) + seq_len(nrow(f)),
+    forecast = f[,1],
+    lower = f[,2],
+    upper = f[,3]
+  )
+
+  # Data frame de la parte histórica
+  df_hist <- data.frame(
+    time = time(original_series),
+    value = as.numeric(original_series)
+  )
+
+  # Gráfico estilo ARIMA
+  ggplot() +
+    geom_line(data = df_hist, aes(x = time, y = value), size = 0.8) +
+    
+    # Intervalo de confianza
+    geom_ribbon(data = df_forecast,
+                aes(x = time, ymin = lower, ymax = upper),
+                fill = "steelblue", alpha = 0.3) +
+    
+    # Línea de pronóstico
+    geom_line(data = df_forecast,
+              aes(x = time, y = forecast),
+              color = "blue", size = 1) +
+    
+    theme_minimal(base_size = 14) +
+    labs(
+      title = paste("Pronóstico VAR para", variable_name),
+      x = "Tiempo",
+      y = "Valor"
+    )
+}
+```
+
+```{r, echo=FALSE}
+variables <- colnames(var4$y)
+
+for (v in variables) {
+  print(
+    plot_var_forecast(
+      forecast_var4,
+      original_series = var4$y[, v],
+      variable_name = v
+    )
+  )
+}
+```
+
+
+Los pronósticos a 6 meses derivados del modelo VAR(1) muestran que las cuatro variables (Consumo Privado, Salario Mínimo, Tasa de Desocupación y Tasa de Costo del Crédito Ordinario –TCCO–) tienden a mantenerse cercanas a sus valores actuales, sin cambios abruptos y con intervalos de confianza amplios, especialmente en las variables más volátiles.
+
+Consumo Privado:
+El pronóstico se mantiene prácticamente estable (en torno a 0.0017), lo que sugiere un crecimiento marginal y sostenido. Los intervalos de confianza son moderadamente estrechos, indicando una incertidumbre baja y una dinámica relativamente predecible dentro del sistema.
+
+Salario Mínimo:
+Presenta incrementos pequeños y constantes (≈0.0038). El modelo anticipa un comportamiento suave sin shocks relevantes. Los intervalos de confianza son reducidos, reflejando estabilidad y una trayectoria relativamente inercial.
+
+Tasa de Desocupación:
+El pronóstico converge hacia un nivel ligeramente por debajo de cero (alrededor de -0.0038). Sin embargo, los intervalos son muy amplios (aprox. ±0.76), lo que refleja alta incertidumbre e indica que esta variable es la más volátil del sistema dentro del VAR.
+
+TCCO:
+Muestra incrementos leves (≈0.07), pero sus intervalos de confianza son los mayores del modelo (aprox. ±2.39). Esto confirma que la TCCO es la variable con mayor variabilidad e impacto acumulado dentro del sistema dinámico.
+
+En general, el VAR(1) pronostica dinámicas suaves y relativamente estables en las variables reales (Consumo Privado y Salario Mínimo), mientras que las variables financieras (Tasa de Desocupación y TCCO) presentan mayor incertidumbre, lo cual es consistente con su variabilidad histórica.
+
+
+## Mapa de flujo de decisiones
+
+```{r, echo=FALSE}
+grViz("
+digraph flowchart {
+
+  graph [layout = dot, rankdir = TB]
+
+  node [shape = rectangle, style = filled, fillcolor = LightSteelBlue, fontname = Helvetica]
+
+  A [label = 'Inicio:\nConjunto de datos']
+  B [label = 'Análisis exploratorio\n• Gráficos\n• Estadísticos descriptivos']
+  C [label = 'Transformaciones\n• Diferencias\n• Logaritmos']
+  D [label = 'Pruebas de estacionariedad\nADF, KPSS']
+  E [label = 'Selección preliminar del modelo']
+  F [label = 'Prueba de cointegración\n(Johansen)']
+  G [label = 'Modelo VEC']
+  H [label = 'Modelo VAR']
+  I [label = 'Estimación del modelo']
+  J [label = 'Diagnósticos\n• Autocorrelación\n• Normalidad\n• Estabilidad']
+  K [label = 'Reajustes\n• Cambiar rezagos\n• Nuevas transformaciones']
+  L [label = 'Modelo validado']
+  M [label = 'Análisis dinámico\nIRF, FEVD']
+  N [label = 'Proyecciones\nForecast + IC']
+  O [label = 'Fin']
+
+  A -> B -> C
+  C -> D [label = 'No estacionarias']
+  C -> E [label = 'Estacionarias']
+  D -> E
+  E -> F
+  F -> G [label = 'Sí cointegración']
+  F -> H [label = 'No cointegración']
+  G -> I
+  H -> I
+  I -> J
+  J -> K [label = 'Modelo inválido']
+  K -> E
+  J -> L [label = 'Modelo válido']
+  L -> M -> N -> O
+}
+")
+```
+
+
+El diagrama de flujo representa todas las etapas involucradas en el proceso de construcción, validación y utilización del modelo econométrico construido. El propósito es mostrar, de manera estructurada, cómo fueron las tomas de decisiones desde la preparación de los datos hasta la generación de pronósticos.
+
+1. Inicio y análisis de datos:
+
+El proceso comenzó con la recopilación del conjunto de datos obtenidos de las plataformas oficiales del INEGI, BANXICO y CONASAMI. Para posteriormente realizar un análisis exploratorio que incluyó:
+
+  * Gráficos de las series
+  * Medidas descriptivas
+  * Revisión de tendencias, estacionalidad y patrones estructurales
+
+2. Transformaciones necesarias
+
+Se realizaron tranformaciones a las series originales, puesto que las series originales no eran estacionarias. Lo que se realizó fue lo siguiente:
+
+  * Logaritmos
+  * Diferencias
+  * Gráficas
+
+Estas transformaciones aseguran que las series cumplan los requisitos del modelo o que sean coherentes con su interpretación económica.
+
+3. Evaluación de estacionariedad
+
+A partir de las series modificadas se aplican pruebas estadísticas como:
+
+* ADF (Augmented Dickey–Fuller)
+* KPSS (Kwiatkowski–Phillips–Schmidt–Shin)
+
+Estas pruebas permiten determinar si las series son estacionarias. Además de graficar los ACFs y los PACFs.
+
+4. Selección preliminar del modelo
+
+Una vez que las series estuvieron listas, se analizó qué tipo de modelo podría utilizarse:
+
+  * Se evaluaron rezagos óptimos
+  * Se revisaron criterios de información (AIC, BIC, HQ)
+  * Y se examinó la estructura de interdependencia entre variables
+
+5. Pruebas de cointegración
+
+Con las series ya preparadas, se aplicó la prueba de Johansen para verificar si existe cointegración entre las variables:
+
+  * Si *sí* hay cointegración → el modelo adecuado es *VEC*
+  * Si *no* hay cointegración → se utiliza un *VAR*
+
+6. Estimación del modelo
+
+Se obtuvieron parámetros tanto del VEC y el VAR.
+
+7. Diagnósticos del modelo
+
+Una vez que se estimó el modelo, se sometió a pruebas para validar su confiabilidad:
+
+  * Autocorrelación de residuales
+  * Normalidad
+  * Heterocedasticidad
+  * Estabilidad del sistema
+  * Raíces características
+
+8. Validación del modelo
+
+Si el modelo cumplió con todos los diagnósticos estadísticos, se considera *válido* para su uso.
+
+9. Análisis dinámico
+
+Con el modelo ya validado se realizó un análisis estructural:
+
+  * IRF (Funciones Impulso-Respuesta)
+  * FEVD (Descomposición de la varianza del error de pronóstico)
+
+Estas herramientas permiten interpretar cómo los choques afectan cada variable y cuál es la importancia relativa de los shocks dentro del sistema.
+
+10. Proyecciones o pronósticos
+
+Finalmente, el modelo se utiliza para generar:
+
+  * Pronósticos de corto plazo (6 meses)
+  * Intervalos de confianza
+  * Y gráficos comparativos entre datos históricos y predicciones
+
+11. Fin del proceso
+
+El flujo concluye luego de la generación de pronósticos.
+
+## Conclusiones
+
+El análisis econométrico realizado para este proyecto, permitió evaluar de forma integral las dinámicas de la demanda interna en México a partir de variables macroeconómicas clave. Los resultados ofrecieron evidencia útil para validar parcialmente la hipótesis planteada, así como para identificar las interrelaciones económicas más relevantes entre consumo privado, condiciones laborales, salarios y condiciones financieras.
+
+* **Validación o rechazo de la hipótesis**
+
+  La hipótesis del proyecto establecía que:
+
+  *“Las variaciones en la inflación (INPC), la actividad económica (IGAE), la tasa de interés (TIIE a 28 días), los salarios mínimos, el tipo de cambio y el nivel de desocupación influyen de manera significativa en el comportamiento del consumo privado en México.”*
+
+  Con base en los resultados obtenidos, se confirmó la existencia de relaciones dinámicas a corto plazo entre el consumo privado y variables como los salarios, la tasa de desocupación y la TCCO, a través del análisis IRF y FEVD. Además, la cointegración detectada entre varias variables sugiere la presencia de relaciones de largo plazo.
+  Sin embargo, los modelos VECM estimados fueron inestables, lo que impidió que se utilizara como un modelo final. Por lo cual, el modelo utilizado fue un VAR(1) en primeras diferencias, estable y válido para análisis de corto plazo, aunque limitado para evaluar relaciones de equilibrio de largo plazo.
+
+  Por lo anterior, se podría decir que la hipótesis es válida, pero parcialmente.
+
+* **Impacto económico, social o actuarial del estudio**
+
+  Los resultados obtenidos permiten realizar un análisis de diferentes aspectos de relevancia. Para empezar, en el ámbito económico, el consumo privado muestra una dinámica suave y marginal, consistente con la debilidad estructural de la economía mexicana. La Tasa de Desocupación y la TCCO presentan alta volatilidad, lo que indica vulnerabilidad en el mercado laboral. 
+  
+  En el ámbito social, el aumento del empleo informal y el estancamiento del empleo formal reflejan tensiones sociales y falta de resiliencia laboral. Además, una demanda interna débil afecta directamente el bienestar de los hogares, reduciendo su capacidad de consumo y su estabilidad financiera.
+
+  Por último, desde un punto actuarial, se puede analizar que la alta volatilidad de la Tasa de Condiciones Críticas de Ocupación (TCCO) y de la tasa de desocupación implica mayor incertidumbre en la estimación de riesgos laborales y financieros.Y, la estabilidad relativa de las variables reales (consumo y salarios) sugiere que los modelos actuariales que dependen de estas series pueden realizar proyecciones más confiables a corto plazo.
+
+En general, este estudio evidencia que la economía mexicana enfrenta una demanda interna débil, marcada por un consumo que apenas crece, un mercado laboral frágil y condiciones financieras volátiles. El modelo VAR(1) permitó capturar las relaciones dinámicas de corto plazo entre las variables seleccionadas y generar pronósticos que reflejan estabilidad moderada, pero también incertidumbre significativa en los componentes laborales y financieros.
+
+Aunque las restricciones del modelo impidieron validar las relaciones de largo plazo, los resultados obtenidos son suficientes para señalar que el fortalecimiento del mercado interno requiere políticas económicas integrales enfocadas en empleo formal, estabilidad salarial y condiciones financieras que impulsen el consumo y la inversión.
+
+
+## Bibliografía
+
+Portal de Finanzas Públicas de la Cámara de Diputados. (2020, 14 abril). CEFP - Análisis En Finanzas Públicas. https://www.cefp.gob.mx/
+
+S&P Global Ratings. (n.d.). https://www.spglobal.com/ratings/es/regulatory/delegate/getPDF?articleId=3481529&type=COMMENTS&defaultFormat=PDF
+
+México: panorama general. (n.d.). World Bank. https://www.bancomundial.org/es/country/mexico/overview
+
+Urrutia, A. R. (2025, June 6). Economía mexicana: persiste la debilidad. Revista IMEF. https://www.revista.imef.org.mx/articulo/economia-mexicana-persiste-la-debilidad/
+
+Salazar, S. A. (2025, October 16). México | El gasto privado pierde dinamismo en septiembre con deterioro de expectativas. BBVA Research. https://www.bbvaresearch.com/publicaciones/mexico-el-gasto-privado-pierde-dinamismo-en-septiembre-con-deterioro-de-expectativas/
+
