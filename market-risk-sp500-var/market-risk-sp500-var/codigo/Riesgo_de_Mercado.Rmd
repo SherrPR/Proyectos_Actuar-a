@@ -1,0 +1,1292 @@
+---
+title: "Riesgo de Mercado"
+author: "Trabajo en equipo"
+date: "2025-05-11"
+output: pdf_document
+---
+# **RIESGO DE MERCADO** 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE)
+```
+
+#### Librerías y paqueterías
+```{r}
+library(quantmod)
+library(fitdistrplus)
+library(VGAM)
+library(ggplot2)
+library(dplyr)
+library(actuar)
+library(corrplot)
+library(knitr)
+library(kableExtra)
+library(moments)  # Para skewness y kurtosis
+library(data.table)
+library(PerformanceAnalytics)
+library(tidyverse)
+```
+
+
+## **Parte I. Selección de activos**
+
+Seleccionamos 20 acciones que pertenecen al S&P 500, las cuales son: Apple, Microsoft Corporation, The Coca-Cola Company, Adobe, Best Buy, Caterpillar, Dell Technologies, Expedia Group, Honeywell International, Iron Mountain Incorporated, JPMorgan Chase & Co, lululemon athletica, Meta, NIKE, Phillips 66, Rockwell Automation, Starbucks Corporation, Texas Instruments Incorporated, Ulta Beauty y Walmart.
+
+```{r}
+cartera <- c("AAPL", "MSFT", "KO", "ADBE", "BBY", "CAT", "DELL", "EXPE", "HON", "IRM",
+             "JPM", "LULU", "META", "NKE", "PSX", "ROK", "SBUX", "TXN", "ULTA", "WMT")
+
+getSymbols(cartera, src = "yahoo", from ="2022-01-01",to = "2025-03-31")
+```
+
+#### **Descripción de las emisoras**
+1. Apple Inc. (AAPL)
+    * Sector : Tecnología
+    * Industria : Electrónica de consumo
+    * Descripción: Apple Inc. diseña, fabrica y comercializa teléfonos inteligentes, computadoras personales, tabletas, wearables y accesorios en todo el mundo.
+    * Se incluye en el modelo por ser una empresa líder en innovación tecnológica, con alta participación de mercado y fuerte generación de flujo de efectivo.
+
+2. Microsoft Corporation (MSFT)
+    * Sector : Tecnología
+    * Industria : Software - Infraestructura
+    * Descripción: Microsoft Corporation desarrolla y da soporte a software, servicios, dispositivos y soluciones en todo el mundo.
+    * Se incluye en el modelo por la diversificación de ingresos, por su liderazgo en servicios en la nube y por el software empresarial.
+
+3. The Coca-Cola Company (KO)
+    * Sector : Defensiva del consumidor
+    * Industria : Bebidas - Sin alcohol
+    * Descripción: The Coca-Cola Company, empresa de bebidas, fabrica y vende diversas bebidas no alcohólicas en Estados Unidos e internacionalmente.
+    * Se inlcuye en el modelo por ser una marca global fuerte y por su estabilidad en ingresos incluso en ciclos económicos bajos.
+
+4. Adobe Inc. (ADBE)
+    * Sector : Tecnología
+    * Industria : Software - Aplicación
+    * Descripción: Adobe Inc., junto con sus subsidiarias, opera como una empresa de tecnología a nivel mundial. Opera a través de tres segmentos: Medios Digitales, Experiencia Digital y Publicidad.
+    * Se incluye en el modelo por su dominio en software creativo y por su fuerte transición a modelos de ingresos por suscripción
+
+5. Best Buy Co., Inc. (BBY)
+    * Sector : Consumo cíclico
+    * Industria : Comercio minorista especializado
+    * Descripción: Best Buy Co., Inc. ofrece productos y soluciones tecnológicas en Estados Unidos, Canadá e internacionalmente. 
+    * Se incluye en el modelo porque representa tendencias de consumo en tecnología y electrónica.
+    
+6. Caterpillar Inc. (CAT)
+    * Sector : Acciones industriales
+    * Industria : Maquinaria agrícola y de construcción pesada
+    * Descripción: Caterpillar Inc. fabrica y vende equipos de construcción y minería, motores diésel y de gas natural para uso fuera de carretera, turbinas de gas industriales y locomotoras diésel-eléctricas en Estados Unidos e internacionalmente.
+    * Se incluye en el modelo por su exposición a ciclos de infraestructura, construcción y minería global
+
+7. Dell Technologies Inc. (DELL)
+    * Sector : Tecnología
+    * Industria : Hardware de computadora
+    * Descripción: Dell Technologies Inc. diseña, desarrolla, fabrica, comercializa, vende y ofrece soporte para diversas soluciones, productos y servicios integrales en América, Europa, Oriente Medio, Asia e internacionalmente.
+    * Se incluye al modelo por su participación relevante en infraestructura tecnológica empresarial. 
+
+8. Expedia Group, Inc. (EXPE)
+    * Sector : Consumo cíclico
+    * Industria : Servicios de viajes
+    * Descripción: Expedia Group, Inc. opera como una compañía de viajes en línea en Estados Unidos e internacionalmente. Opera a través de los segmentos B2C, B2B y Trivago.
+    * Se incluye en el modelo porque representa la recuperación y el crecimiento del sector turístico post-pandemia, además de la tendencia creciente hacia la digitalización de servicios de viajes.
+
+9. Honeywell International Inc. (HON)
+    * Sector : Acciones industriales
+    * Industria : Conglomerados
+    * Descripción: Honeywell International Inc. se dedica a las tecnologías aeroespaciales, la automatización industrial, la automatización de edificios y las soluciones energéticas y sostenibles en Estados Unidos, Europa e internacionalmente.
+    * Se incluye en el modelo por su diversificación industrial, innovación tecnológica e importancia en manufactura avanzada.
+
+10. Iron Mountain Incorporated (IRM)
+    * Sector : Bienes raíces
+    * Industria : REIT - Especialidad
+    * Descripción: Gestión de almacenamiento físico y digital de información, servicios de destrucción segura de documentos.
+    * Se incluye en el modelo por su exposición a tendencias de protección de datos y almacenamiento de información.
+
+11. JPMorgan Chase & Co. (JPM)
+    * Sector : Servicios financieros
+    * Industria : Bancos - Diversificados
+    * Descripción: JPMorgan Chase & Co. opera como una compañía de servicios financieros a nivel mundial. Opera a través de tres segmentos: Banca de Consumo y Banca Comunitaria, Banca Comercial y de Inversión, y Gestión de Activos y Patrimonio. 
+    * Se incluye en el modelo por su fortaleza financiera, diversificación de ingresos y liderazgo en el sector bancario.
+
+12. lululemon athletica inc. (LULU)
+    *  Sector : Consumo cíclico
+    * Industria : Venta minorista de ropa
+    * Descripción: lululemon athletica inc., junto con sus subsidiarias, diseña, distribuye y vende ropa deportiva técnica, calzado y accesorios para mujeres y hombres bajo la marca lululemon en Estados Unidos, Canadá, México, China continental, Hong Kong, Taiwán, Macao e internacionalmente. 
+    * Se incluye en el modelo por ser una marca fuerte en athleisure y por su crecimiento internacional.
+
+13. Meta Platforms, Inc. (META)
+    * Sector : Servicios de comunicación
+    * Industria : Contenido e información de Internet
+    * Descripción: Meta Platforms, Inc. se dedica al desarrollo de productos que permiten a las personas conectar y compartir con amigos y familiares a través de dispositivos móviles, computadoras personales, gafas de realidad virtual y mixta, realidad aumentada y wearables en todo el mundo.
+    * Se incluye en el modelo por su liderazgo en redes sociales y por la monetización de datos.
+
+14. NIKE, Inc. (NKE)
+    * Sector : Consumo cíclico
+    * Industria : Calzado y accesorios
+    * Descripción: NIKE, Inc., junto con sus subsidiarias, se dedica al diseño, desarrollo, comercialización y venta de calzado, indumentaria, equipamiento, accesorios y servicios deportivos en todo el mundo.
+    * Se incluye en el modelo por ser una potente marca global y por su resiliencia del consumo deportivo.
+
+15. Phillips 66 (PSX)
+    * Sector : Energía
+    * Industria : Refinación y comercialización de petróleo y gas
+    * Descripción: Phillips 66 opera como una empresa de fabricación y logística de energía en Estados Unidos, Reino Unido, Alemania e internacionalmente. Opera a través de cinco segmentos: Midstream, Productos Químicos, Refinación, Marketing y Especialidades (M&S) y Combustibles Renovables.
+    * Se inlcuye en el modelo por la exposición balanceada a energía tradicional y crecimiento en productos químicos.
+
+16. Rockwell Automation, Inc. (ROK)
+    * Sector : Acciones industriales
+    * Industria : Maquinaria industrial especializada
+    * Descripción: Rockwell Automation, Inc. ofrece soluciones de automatización industrial y transformación digital en Norteamérica, Europa, Oriente Medio, África, Asia Pacífico y Latinoamérica. La empresa opera a través de tres segmentos: Dispositivos Inteligentes, Software y Control, y Servicios de Ciclo de Vida. Sus soluciones incluyen productos y servicios de hardware y software.
+    * Se inlcuye en el modelo por el impacto en el crecimiento en automatización y transformación digital de la industria.
+
+17. Starbucks Corporation (SBUX)
+    * Sector : Consumo cíclico
+    * Industria : Restaurantes
+    * Descripción: Starbucks Corporation, junto con sus subsidiarias, opera como tostadora, comercializadora y minorista de café en todo el mundo.
+    * Se inlcuye en el modelo por ser una marca global fuerte; además, es una de las tendencias de consumo fuera del hogar.
+
+18. Texas Instruments Incorporated (TXN)
+    * Sector : Tecnología
+    * Industria : Semiconductores
+    * Descripción: Texas Instruments Incorporated diseña, fabrica y vende semiconductores a diseñadores y fabricantes de electrónica en Estados Unidos, China, el resto de Asia, Europa, Oriente Medio, África, Japón e internacionalmente. La compañía opera a través de los segmentos de Procesamiento Analógico e Integrado. 
+    * Se incluye en el modelo por ser fuerte en componentes esenciales de electrónica, y por su alta rentabilidad.
+    
+19. Ulta Beauty, Inc. (ULTA)
+    * Sector : Consumo cíclico
+    * Industria : Comercio minorista especializado
+    * Descripción: Ulta Beauty, Inc. opera como minorista especializado en belleza en Estados Unidos. La compañía ofrece productos de belleza de marca y de marca blanca, además ofrece servicios de belleza. 
+    * Se incluye en el modelo por su liderazgo en el sector de belleza de EE. UU. y fuerte modelo de fidelización de clientes.
+    
+20. Walmart Inc. (WMT)
+    * Sector : Defensa del consumidor
+    * Industria : Tiendas de descuento
+    * Descripción: Walmart Inc. opera tiendas y clubes minoristas y mayoristas, sitios web de comercio electrónico y aplicaciones móviles en todo el mundo.
+    * Se incluye en el modelo por ser líder en retail de bajo costo, además de su resiliencia económica en periodos de desaceleración.
+
+## **Parte II. Valor en Riesgo no paramétrico**
+
+### VaR no paramétrico Simulación Histórica
+
+***- Individual***
+```{r, fig.width=10, fig.height=20, fig.align='center', out.width='100%'}
+VaR_resulSH <- data.frame() # lista para guardar los resultados
+d1_resultadosSH <- list()
+
+par(mfrow = c(10, 2)) # para las gráficas en el pdf
+par(mar = c(3,3,2,1))
+
+for (emisora in cartera) {
+  precios <- Cl(get(emisora)) # precios de cierre
+  d1_SH <- data.frame(Precio = as.numeric(precios)) # creamos un data frame
+  
+  d1_SH$Rend <- NA  # rendimientos
+  d1_SH$Reval <- NA # revalorización
+  d1_SH$PL <- NA    # pérdidas o ganancias
+  
+  n <- length(d1_SH$Precio) # número de observaciones
+  
+  for (k in 2:n) {
+    d1_SH$Rend[k] <- d1_SH$Precio[k]/d1_SH$Precio[k-1]-1
+    d1_SH$Reval[k] <- d1_SH$Precio[n]*(1+d1_SH$Rend[k])
+    d1_SH$PL[k] <- d1_SH$Precio[n]-d1_SH$Reval[k]
+  }
+  
+  d1_resultadosSH[[emisora]] <- d1_SH # para visualizar los datos de d1 de todas las emisoras
+  
+  mrend_SH <- mean(d1_SH$Rend, na.rm = TRUE) # Media de los rendimientos
+  srend_SH <- sd(d1_SH$Rend, na.rm = TRUE)   # Volatilidad
+  
+  VaRSH <- quantile(d1_SH$PL, probs = c(0.95,0.97,0.99), na.rm = TRUE) # niveles de confianza
+  #EXPECTED SHORTFALL
+  ES_SH95 <- mean(d1_SH$PL[d1_SH$PL > VaRSH[1]], na.rm = TRUE)
+  ES_SH97 <- mean(d1_SH$PL[d1_SH$PL > VaRSH[2]], na.rm = TRUE)
+  ES_SH99 <- mean(d1_SH$PL[d1_SH$PL > VaRSH[3]], na.rm = TRUE)
+  
+  dias <- c(1, 7, 15, 30, 60, 90,180) # horizontes de tiempo
+  
+  for (d in dias) {
+    VaRSHd <- VaRSH*sqrt(d)
+    
+    temp_SH <- data.frame(
+      Emisora = emisora,
+      Horizonte = d,
+      Rend_SH = mrend_SH,
+      Vol_SH = srend_SH,
+      VaRSH_95 = as.numeric(VaRSHd[1]),    # VaR al 95% de confianza
+      VaRSH_97 = as.numeric(VaRSHd[2]),    # VaR al 97% de confianza
+      VaRSH_99 = as.numeric(VaRSHd[3]),    # VaR al 99% de confianza
+      ES_SH95 = as.numeric(ES_SH95),
+      ES_SH97 = as.numeric(ES_SH97),
+      ES_SH99 = as.numeric(ES_SH99)
+    )
+    VaR_resulSH <- rbind(VaR_resulSH,temp_SH)
+  }
+  
+  hist(d1_SH$PL, breaks = 20,
+       main = paste("Histograma de Pérdidas -", emisora),
+       col = "lightblue", xlab = "Pérdidas o Ganancias")
+  
+  # Agregar líneas verticales para visualizar los niveles de VaR
+  abline(v = VaRSH[1], col = "gold", lwd = 2)   # VaR al 95%
+  abline(v = VaRSH[2], col = "orange", lwd = 2) # VaR al 97%
+  abline(v = VaRSH[3], col = "red", lwd = 2)    # VaR al 99%
+}
+#View(VaR_resulSH)
+```
+Visualización de los resultados del **VaR de cada emisora**
+```{r}
+#individuales <- unique(VaR_resulSH$Emisora) # Esta línea es para visualizar los resultados de cada emisora
+individuales <- c("AAPL", "NKE") # para ejemplificar se utilizan dos emisoras
+
+for (emi in individuales) {
+  VaR_resulSH %>%
+    dplyr::filter(Emisora == emi) %>%
+    dplyr::select(Horizonte, VaRSH_95, VaRSH_97, VaRSH_99) %>%
+    dplyr::mutate(across(starts_with("VaRSH"), ~ round(.x, 4))) %>%
+    knitr::kable(caption = paste("Resultados de VaR para", emi)) %>%
+    print()
+}
+```
+Visuaización del **Expected Shortfall** para cada emisora
+```{r}
+emisoras <- unique(VaR_resulSH$Emisora)
+horizontes <- unique(VaR_resulSH$Horizonte)
+
+# Crear listas para guardar los resultados
+lista_resultados <- list()
+
+for (h in horizontes) {
+  ES_SH95 <- numeric(length(emisoras))
+  ES_SH97 <- numeric(length(emisoras))
+  ES_SH99 <- numeric(length(emisoras))
+  
+  for (i in seq_along(emisoras)) {
+    emisora_actual <- emisoras[i]
+    emisora_horizonte <- subset(VaR_resulSH, Emisora == emisora_actual & Horizonte == h)
+    
+    if (nrow(emisora_horizonte) > 0) {
+      ES_SH95[i] <- emisora_horizonte$ES_SH95[1]
+      ES_SH97[i] <- emisora_horizonte$ES_SH97[1]
+      ES_SH99[i] <- emisora_horizonte$ES_SH99[1]
+    } else {
+      ES_SH95[i] <- NA
+      ES_SH97[i] <- NA
+      ES_SH99[i] <- NA
+    }
+  }
+  ES_emisoras_h <- data.frame(
+    Emisora = emisoras,
+    ES_95 = ES_SH95,
+    ES_97 = ES_SH97,
+    ES_99 = ES_SH99,
+    Horizonte = h
+  )
+  
+  lista_resultados[[as.character(h)]] <- ES_emisoras_h
+}
+
+ES_emisoras_total <- do.call(rbind, lista_resultados)
+ES_emisoras_total
+
+```
+
+***- Portafolio***
+```{r}
+d2_SH <- do.call(merge, lapply(cartera,function(x) Cl(get(x))))
+
+colnames(d2_SH) <- cartera 
+
+n <- length(d2_SH$AAPL) # número de días
+m <- length(d2_SH[1,]) # número de emisoras
+
+# Para el cálculo de los rendimientos
+Rend <- diff(as.matrix(d2_SH)) / d2_SH[-n,]
+
+# Análisis de correlación
+c <- cor(Rend, use = "complete.obs")
+corrplot(c,type ="upper")
+
+# Cálculo de las PL
+precio_final <- d2_SH[n,] # último valor precio de las emisoras
+PL <- sweep(Rend, 2, precio_final, FUN = function(x, precio) precio*(1 - (1 + x))) # el 2 indica que la operación se realiza por columna
+PL_total <- rowSums(PL) # suma de la pérdida total del portafolio
+```
+
+**VaR del portafolio** y **Expected Shortfall** por Simulación Histórica:
+```{r}
+horizontes <- c(1, 7, 15, 30, 60, 90, 180)
+
+# Crear pérdidas acumuladas para cada horizonte
+PL_total_list <- list()
+
+for (h in seq_along(horizontes)) {
+  h_actual <- horizontes[h]
+  
+  PL_h <- sapply(1:(length(PL_total) - h_actual + 1), function(i) {
+    sum(PL_total[i:(i + h_actual - 1)])
+  })
+  
+  PL_total_list[[h]] <- PL_h
+}
+longitud_maxima <- max(sapply(PL_total_list, length))
+PL_total_mat <- matrix(NA, nrow = longitud_maxima, ncol = length(horizontes))
+
+for (h in seq_along(horizontes)) {
+  PL_total_mat[1:length(PL_total_list[[h]]), h] <- PL_total_list[[h]]
+}
+
+colnames(PL_total_mat) <- paste0(horizontes, "_días")
+
+niveles_confianza <- c(0.95, 0.97, 0.99)
+nombres_VaR <- paste0("VaR_", niveles_confianza * 100, "%")
+nombres_ES <- paste0("ES_", niveles_confianza * 100, "%")
+
+VaR_portSH <- matrix(NA, nrow = length(niveles_confianza), ncol = length(horizontes))
+ES_portSH <- matrix(NA, nrow = length(niveles_confianza), ncol = length(horizontes))
+
+for (h in 1:length(horizontes)) {
+  perdidas_h <- na.omit(PL_total_mat[, h])
+  
+  # VaR
+  VaR_h <- quantile(perdidas_h, probs = niveles_confianza)
+  VaR_portSH[, h] <- VaR_h
+  
+  # ES
+  for (i in seq_along(niveles_confianza)) {
+    nivel <- niveles_confianza[i]
+    ES_h <- mean(perdidas_h[perdidas_h >= VaR_h[i]])
+    ES_portSH[i, h] <- ES_h
+  }
+}
+colnames(VaR_portSH) <- paste0(horizontes, "_días")
+rownames(VaR_portSH) <- nombres_VaR
+
+colnames(ES_portSH) <- paste0(horizontes, "_días")
+rownames(ES_portSH) <- nombres_ES
+
+cat("### Tabla de VaR del Portafolio\n")
+kable(round(VaR_portSH, 4), caption = "VaR del Portafolio por horizonte") %>%
+  kable_styling(full_width = F, position = "center", bootstrap_options = c("striped", "hover"))
+
+cat("\n\n")
+
+cat("### Tabla de Expected Shortfall del Portafolio\n")
+kable(round(ES_portSH, 4), caption = "Expected Shortfall del Portafolio por horizonte") %>%
+  kable_styling(full_width = F, position = "center", bootstrap_options = c("striped", "hover"))
+
+par(mfrow = c(2, 4), mar = c(4, 4, 3, 2))
+
+for (h in 1:length(horizontes)) {
+  perdidas_h <- na.omit(PL_total_mat[, h])
+  
+  hist(perdidas_h, breaks = 40, main = paste("Pérdidas", horizontes[h], "días"),
+       xlab = "Pérdida", col = "gold")
+  
+  abline(v = VaR_portSH[1, h], col = "brown", lwd = 2)  # VaR 95%
+  abline(v = VaR_portSH[2, h], col = "purple", lwd = 2) # VaR 97%
+  abline(v = VaR_portSH[3, h], col = "red", lwd = 2)    # VaR 99%
+}
+par(mfrow = c(1,1))  
+
+```
+
+### VaR no paramétrico Simulación Monte Carlo - Normalidad
+***- Individual***
+```{r}
+d1_SMN <- do.call(merge, lapply(cartera,function(x) Cl(get(x))))
+colnames(d1_SMN) <- cartera
+d1_SMN <- data.frame(lapply(d1_SMN, as.numeric))
+
+n <- nrow(d1_SMN)
+
+# cálculo de rendimientos
+d1_RendSMN <- data.frame(matrix(NA, nrow = n, ncol = length(cartera)))
+colnames(d1_RendSMN) <- cartera
+
+for (emisora in cartera) {
+  for (k in 2:n) {
+    d1_RendSMN[k, emisora] <- d1_SMN[k, emisora] / d1_SMN[k-1, emisora] - 1
+  }
+}
+
+# estimación de parámetros
+mu <- numeric(length(cartera))
+sigma <- numeric(length(cartera))
+names(mu) <- names(cartera)
+names(sigma) <- names(cartera)
+
+for (emisora in cartera) {
+  y <- d1_RendSMN[[emisora]][2:n]
+  mod1 <- fitdist(y, "norm", method = "mle")
+
+  mu[emisora] <- mod1$estimate[1]
+  sigma[emisora] <- mod1$estimate[2]
+}
+```
+Cálculo del **VaR SM asumiendo normalidad** y del *Expected Shortfall** para cada emisora
+```{r}
+# Simulaciones
+set.seed(123)
+m <- 5000
+nc <- c(0.95, 0.97, 0.99)
+t <- c(1, 7, 15, 30, 60, 90, 180)
+
+lista_resultados <- list()
+
+for (emisora in cartera) {
+  
+  mu_emisora <- mu[emisora]
+  sigma_emisora <- sigma[emisora]
+  PrecioActual <- d1_SMN[n, emisora]
+  
+  for(h in t){
+    mu_h <- mu_emisora * h
+    sigma_h <- sigma_emisora * sqrt(h)
+    
+    # Simulación de rendimientos
+    rend_simulados <- rnorm(m, mean = mu_h, sd = sigma_h)
+    
+    # Simulación de precios
+    precios_simulados <- PrecioActual * (1 + rend_simulados)
+    PL_simulados <- precios_simulados - PrecioActual
+    
+    # Cálculo de VaR para cada nivel de confianza
+    VaRs <- quantile(PL_simulados, probs = nc)
+    
+    # Cálculo de ES para cada nivel de confianza
+    ESs <- sapply(1:length(nc), function(i) {
+      mean(PL_simulados[PL_simulados > VaRs[i]])
+    })
+
+    lista_resultados[[length(lista_resultados) + 1]] <- data.frame(
+      Emisora = emisora,
+      Horizonte = h,
+      Rend_SH = mu_emisora, 
+      Vol_SH = sigma_emisora,
+      VaRSH_95 = VaRs[1],
+      VaRSH_97 = VaRs[2],
+      VaRSH_99 = VaRs[3],
+      ES_SH95 = ESs[1],
+      ES_SH97 = ESs[2],
+      ES_SH99 = ESs[3]
+    )
+  }
+}
+
+resultados_VaRSMN <- do.call(rbind, lista_resultados)
+print(head(resultados_VaRSMN))
+
+```
+***- Portafolio***
+```{r}
+set.seed(123)
+# Cargar datos de precios
+d2_SMN <- do.call(merge, lapply(cartera,function(x) Cl(get(x))))
+colnames(d2_SMN) <- cartera
+d2_SMN <- data.frame(lapply(d2_SMN, as.numeric))
+
+n <- nrow(d2_SMN)
+
+# Cálculo de rendimientos
+d2_RendSMN <- data.frame(matrix(NA, nrow = n, ncol = length(cartera)))
+colnames(d2_RendSMN) <- cartera
+
+for (emisora in cartera) {
+  for (k in 2:n) {
+    d2_RendSMN[k, emisora] <- d2_SMN[k, emisora] / d2_SMN[k-1, emisora] - 1
+  }
+}
+d2_RendSMN <- d2_RendSMN[-1,]
+
+# Estimación de parámetros (media y desviación estándar)
+mus <- colMeans(d2_RendSMN)
+sigmas <- apply(d2_RendSMN, 2, sd)
+
+m <- 20000 # Número de simulaciones
+t <- c(1, 7, 15, 30, 60, 90)  # Horizontes
+nc <- c(0.95, 0.97, 0.99)  # Niveles de confianza
+
+# Inicialización de simulaciones
+SMN_simulaciones <- matrix(NA, nrow = m, ncol = length(t))
+
+# Pesos del portafolio (asumimos pesos iguales)
+pesos <- rep(1/length(cartera), length(cartera))
+
+# Realizar simulaciones
+for(j in 1:m) {
+  for(h in 1:length(t)) {
+    horizonte <- t[h]
+    
+    # Generar simulaciones de rendimientos para cada emisora
+    rend_simulados <- sapply(1:length(cartera), function(i) rnorm(horizonte, mus[i], sigmas[i]))
+    rend_simulados <- as.matrix(rend_simulados)
+    
+    # Calcular el rendimiento total del portafolio
+    rend_portafolio_dia <- rend_simulados %*% pesos
+    rendSMN_portafolio <- prod(1 + rend_portafolio_dia) - 1
+    
+    SMN_simulaciones[j, h] <- rendSMN_portafolio
+  }
+}
+
+# Calcular VaR para cada nivel de confianza
+resultados_VaRSMNport <- apply(SMN_simulaciones, 2, function(x){ quantile(x, probs = nc)})
+
+# Calcular Expected Shortfall (ES) para cada nivel de confianza
+ESs_portafolio <- matrix(NA, nrow = length(nc), ncol = length(t))
+
+for (i in 1:length(nc)) {
+  for (h in 1:length(t)) {
+    VaR_h <- resultados_VaRSMNport[i, h]
+    ESs_portafolio[i, h] <- mean(SMN_simulaciones[SMN_simulaciones[, h] > VaR_h, h])
+  }
+}
+
+# Asignar nombres de filas y columnas
+colnames(resultados_VaRSMNport) <- paste0(t, " días")
+rownames(resultados_VaRSMNport) <- paste0("VaR ", nc * 100, "%")
+
+colnames(ESs_portafolio) <- paste0(t, " días")
+rownames(ESs_portafolio) <- paste0("ES ", nc * 100, "%")
+
+# Mostrar resultados de VaR y ES
+cat("\n--- VaR Simulación Monte Carlo (Normal) ---\n")
+print(round(resultados_VaRSMNport, 5))
+
+cat("\n--- Expected Shortfall (ES) ---\n")
+print(round(ESs_portafolio, 5))
+
+# Graficar histogramas de simulaciones de pérdidas
+par(mfrow = c(2, 3), mar = c(4, 4, 3, 1))
+
+for(i in 1:length(t)) {
+  hist(SMN_simulaciones[, i], breaks = 40,
+       main = paste("Histograma de Pérdidas -", t[i], "días"),
+       xlab = "Rendimiento", col = "gold")
+  abline(v = resultados_VaRSMNport[1, i], col = "red", lwd = 2)  # Línea VaR 95%
+}
+
+```
+
+### VaR no paramétrico Simulación Monte Carlo - Laplace
+***- Individual***
+```{r}
+# Crear lista de precios
+precios <- list()
+for (i in cartera) {
+  precios[[i]] <- Cl(get(i))
+}
+
+# Cálculo de rendimientos logarítmicos
+rendimientos <- list()
+for (i in cartera) {
+  precios_vec <- as.numeric(precios[[i]])
+  rend <- diff(log(precios_vec))
+  rendimientos[[i]] <- rend
+}
+
+nc <- c(0.95, 0.97, 0.99) # niveles de confianza
+dias <- c(1, 7, 15, 30, 60, 90, 180) # horizontes
+nsim <- c(5000, 10000, 20000)
+set.seed(123)
+
+# para los resultados VaR y ES
+resultado_VaR <- list()
+resultado_ES <- list()
+
+for (emisora in cartera) {
+  y <- rendimientos[[emisora]]  # Rendimientos
+  # ajuste de Laplace
+  mod_laplace <- fitdist(y, "laplace", method="mle", start=list(location=0, scale=1))
+  loc <- coef(mod_laplace)[1]
+  scale <- coef(mod_laplace)[2]
+  
+  ultimo_precio <- tail(precios[[emisora]], 1)  # Último precio disponible
+  
+  # sublistas para cada emisora
+  resultado_VaR[[emisora]] <- list()
+  resultado_ES[[emisora]] <- list()
+  
+  for (n_sims in nsim) {
+    rend_sim <- rlaplace(n_sims, loc, scale) # Simulación de rendimientos
+    precios_sim <- as.numeric(ultimo_precio) * exp(rend_sim) # Simulación de precios futuros
+    PL <- as.numeric(ultimo_precio) - precios_sim   # Pérdidas y ganancias
+    
+    # Guardar resultados
+    VaR_n <- matrix(NA, nrow=length(dias), ncol=length(nc))
+    ES_n  <- matrix(NA, nrow=length(dias), ncol=length(nc))
+    rownames(VaR_n) <- paste0(dias, " días")
+    colnames(VaR_n) <- paste0(nc*100, "%")
+    rownames(ES_n) <- paste0(dias, " días")
+    colnames(ES_n) <- paste0(nc*100, "%")
+    
+    for (h in 1:length(dias)) {
+      h_day <- dias[h]
+      escalar <- sqrt(h_day)
+      
+      for (c in 1:length(nc)) {
+        nivel <- nc[c]
+      
+        PL_esc <- PL * escalar
+        
+        VaR_temp <- quantile(PL_esc, nivel)
+        ES_temp <- mean(PL_esc[PL_esc > VaR_temp])  # Expected Shortfall
+        
+        VaR_n[h, c] <- VaR_temp
+        ES_n[h, c]  <- ES_temp
+      }
+    }
+    
+    resultado_VaR[[emisora]][[paste0("Sim_", n_sims)]] <- VaR_n
+    resultado_ES[[emisora]][[paste0("Sim_", n_sims)]] <- ES_n
+  }
+}
+head(resultado_VaR$AAPL) # para visualizar los resultados del VaR por emisora
+```
+Visualización del **VaR** y **Expected Shortfall** para una emisora con m simulaciones
+```{r}
+resultado_VaR[["AAPL"]][["Sim_5000"]]
+resultado_ES[["AAPL"]][["Sim_5000"]]
+```
+
+```{r}
+# gráficas
+df_VaR <- data.frame()
+
+for (emisora in cartera) {
+  for (n_sims in nsim) {
+    for (h in 1:length(dias)) {
+      for (c in 1:length(nc)) {
+        VaR_value <- resultado_VaR[[emisora]][[paste0("Sim_", n_sims)]][h, c]
+        df_VaR <- rbind(df_VaR, data.frame(Emisora = emisora, Simulacion = n_sims, Horizonte = dias[h],
+                                           NivelConfianza = paste0(nc[c]*100, "%"), VaR = VaR_value))
+      }
+    }
+  }
+}
+
+ggplot(df_VaR, aes(x = Horizonte, y = VaR, color = NivelConfianza, group = interaction(Emisora, Simulacion))) +
+  geom_line() +
+  facet_wrap(~ Emisora, scales = "free_y") +  # Una subgráfica por emisora
+  theme_minimal() +
+  labs(
+    title = "VaR por Emisora, Simulación y Horizonte",
+    x = "Horizonte de Tiempo (días)",
+    y = "VaR",
+    color = "Nivel de Confianza"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+***- Portafolio***
+```{r}
+precios <- list()
+for (i in cartera) {
+  precios[[i]] <- Cl(get(i))
+}
+
+# Rendimientos logarítmicos
+rendimientos <- list()
+for (i in cartera) {
+  precios_vec <- as.numeric(precios[[i]])
+  rend <- diff(log(precios_vec))
+  rendimientos[[i]] <- rend
+}
+
+nc <- c(0.95, 0.97, 0.99) # niveles de confianza
+dias <- c(1, 7, 15, 30, 60, 90, 180) # horizontes de tiempo
+nsim <- c(5000, 10000, 20000) # número de simulaciones
+set.seed(123)
+
+# Resultado para portafolio
+resultado_VaR_portafolio <- list()
+resultado_ES_portafolio <- list()
+
+# Pesos iguales
+pesos <- rep(1/length(cartera), length(cartera))  
+
+# Construir el rendimiento del portafolio
+rend_portafolio <- Reduce(`+`, Map(`*`, rendimientos, pesos))
+
+# Ajuste de distribución Laplace
+mod_laplace_port <- fitdist(rend_portafolio, "laplace", method="mle", start=list(location=0, scale=1))
+loc_port <- coef(mod_laplace_port)[1]
+scale_port <- coef(mod_laplace_port)[2]
+
+# Últimos precios
+ultimos_precios <- sapply(precios, function(x) as.numeric(tail(x, 1)))
+
+# Último precio del portafolio
+ultimo_precio_portafolio <- sum(pesos * ultimos_precios)
+
+# Simulaciones
+for (n_sims in nsim) {
+  
+  rend_sim_portafolio <- rlaplace(n_sims, loc_port, scale_port)
+  precios_sim_portafolio <- ultimo_precio_portafolio * exp(rend_sim_portafolio)
+  PL_portafolio <- ultimo_precio_portafolio - precios_sim_portafolio
+  
+  VaR_n_port <- matrix(NA, nrow=length(dias), ncol=length(nc))
+  ES_n_port  <- matrix(NA, nrow=length(dias), ncol=length(nc))
+  
+  rownames(VaR_n_port) <- paste0(dias, " días")
+  colnames(VaR_n_port) <- paste0(nc*100, "%")
+  
+  rownames(ES_n_port) <- paste0(dias, " días")
+  colnames(ES_n_port) <- paste0(nc*100, "%")
+  
+  for (h in 1:length(dias)) {
+    h_day <- dias[h]
+    escalar <- sqrt(h_day)
+    
+    for (c in 1:length(nc)) {
+      nivel <- nc[c]
+      
+      PL_esc <- PL_portafolio * escalar
+      
+      VaR_temp <- quantile(PL_esc, nivel)
+      ES_temp <- mean(PL_esc[PL_esc > VaR_temp])
+      
+      VaR_n_port[h, c] <- VaR_temp
+      ES_n_port[h, c] <- ES_temp
+    }
+  }
+  
+  resultado_VaR_portafolio[[paste0("Sim_", n_sims)]] <- VaR_n_port
+  resultado_ES_portafolio[[paste0("Sim_", n_sims)]] <- ES_n_port
+}
+```
+Visualización del **VaR** y **Expected Shortfall** para una emisora con m simulaciones del portafolio
+```{r}
+df_resultados <- data.frame()
+
+for (n_sims in nsim) {
+  VaR_temp <- resultado_VaR_portafolio[[paste0("Sim_", n_sims)]]
+  ES_temp  <- resultado_ES_portafolio[[paste0("Sim_", n_sims)]]
+  
+  for (h in 1:length(dias)) {
+    for (c in 1:length(nc)) {
+      fila_temp <- data.frame(
+        Simulacion = n_sims,
+        Horizonte = dias[h],
+        NivelConfianza = nc[c],
+        VaR = VaR_temp[h, c],
+        ES  = ES_temp[h, c]
+      )
+      df_resultados <- rbind(df_resultados, fila_temp)
+    }
+  }
+}
+head(df_resultados)
+```
+
+```{r}
+# gráficas
+ggplot(df_resultados, aes(x = Horizonte, y = VaR, color = factor(NivelConfianza), group = NivelConfianza)) +
+  geom_line(size=1.2) +
+  facet_wrap(~ Simulacion) +
+  theme_minimal(base_size = 14) +
+  labs(title = "VaR del Portafolio (Laplace)", x = "Horizonte (días)", y = "VaR ($)", color = "Nivel Confianza") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## **Parte III. Valor en Riesgo paramétrico**
+
+#### Creacion de la base de datos
+```{r}
+d1 <- data.frame(AAPL$AAPL.Close, MSFT$MSFT.Close, KO$KO.Close, ADBE$ADBE.Close, BBY$BBY.Close, CAT$CAT.Close,
+                 DELL$DELL.Close, EXPE$EXPE.Close, HON$HON.Close, IRM$IRM.Close, JPM$JPM.Close, LULU$LULU.Close,
+                 META$META.Close, NKE$NKE.Close, PSX$PSX.Close, ROK$ROK.Close, SBUX$SBUX.Close, TXN$TXN.Close,
+                 ULTA$ULTA.Close, WMT$WMT.Close)
+colnames(d1) <- c("AAPL", "MSFT", "KO", "ADBE", "BBY", "CAT", "DELL", "EXPE", "HON", "IRM",
+             "JPM", "LULU", "META", "NKE", "PSX", "ROK", "SBUX", "TXN", "ULTA", "WMT")
+```
+
+Calculo de los rendimientos y la funcion de perdidas y ganancias
+```{r}
+n <- 20 # Número de emisoras
+m <- length(d1$AAPL) # Número de observaciones
+
+rend <- matrix(data = NA, nrow = m - 1, ncol = n)
+reval <- matrix(data = NA, nrow = m - 1, ncol = n)
+pl <- matrix(data = NA, nrow = m - 1, ncol = n)
+
+for (j in 1:n) {
+  for (k in 2:m) {
+    # Rendimiento
+    rend[k - 1, j] <- d1[k, j] / d1[k - 1, j] - 1
+
+    # Precio revaluado usando el precio final de la emisora j
+    reval[k - 1, j] <- d1[m, j] * (1 + rend[k - 1, j])
+
+    # Pérdida o ganancia
+    pl[k - 1, j] <- d1[m, j] - reval[k - 1, j]
+  }
+}
+```
+
+### VaR Parametrico
+***- Individual***
+```{r}
+conf <- c(0.95, 0.97, 0.99)         # Niveles de confianza
+f <- qnorm(conf, 0, 1)             # Valor crítico de la normal
+t <- c(1, 7, 15, 30, 60, 90, 180)  # Plazos en días
+
+VaRp <- array(NA, dim = c(n, length(f), length(t))) # 3D: emisoras x confianza x plazo
+
+for (j in 1:n) {
+  sigma <- sd(rend[, j])
+  for (i in 1:length(f)) {
+    for (h in 1:length(t)) {
+      VaRp[j, i, h] <- d1[m, j] * f[i] * sigma * sqrt(t[h])
+    }
+  }
+}
+# Son 7 tablas, una por cada horizonte de tiempo
+# Cada emisora tiene su var con los 3 respectivos niveles de confianza 
+```
+
+*Horizonte de tiempo de 1 dia, nivel de confianza del 95%, 95% y 99%
+```{r}
+VaRp[,,1]
+```
+
+*Gráficos
+```{r}
+par(mfrow = c(2, 2))  # 2 filas, 2 columnas
+
+emisoras <- colnames(pl)[1:4]             # Nombres de las primeras 4 emisoras
+colores <- c("skyblue", "lightgreen", "orange", "purple2")
+niveles_conf <- c(0.95, 0.97, 0.99)
+col_var <- c("yellow", "orange", "red")
+titulos <- c("VaR Parametrico Apple","VaR Parametrico Microsoft Corporation",
+             "VaR Parametrico The Coca-Cola Company","VaR Parametrico Adobe")
+for (j in 1:4) {
+  datos <- pl[, j]
+  
+  hist(datos, 
+       probability = TRUE, 
+       main = titulos[j], 
+       col = colores[j], 
+       xlab = "Pérdida", 
+       breaks = 30)
+  
+  # Dibujar líneas de VaR para cada nivel de confianza (usando plazo 1 día)
+  for (i in 1:3) {
+    abline(v = VaRp[j, i, 1], col = col_var[i], lwd = 2, lty = 2)
+  }
+  
+  legend("topleft", 
+         legend = c("VaR 95%", "VaR 97%", "VaR 99%"), 
+         col = col_var, lwd = 0.01, lty = 2, cex = 0.7)
+}
+```
+
+```{r}
+par(mfrow = c(2, 2))  # 2 filas, 2 columnas
+
+emisoras <- colnames(pl)[5:8]  # Nombres de las emisoras 5 a 8
+colores <- c("lightpink", "lightcyan", "khaki", "plum")
+niveles_conf <- c(0.95, 0.97, 0.99)
+col_var <- c("yellow", "orange", "red")
+titulos <- c("VaR Parametrico Best Buy",
+             "VaR Parametrico Caterpillar",
+             "VaR Parametrico Dell Technologies",
+             "VaR Parametrico Expedia Group")
+
+for (j in 1:4) {
+  datos <- pl[, j + 4]  # Ajusta índice: columnas 5, 6, 7, 8
+  
+  hist(datos, 
+       probability = TRUE, 
+       main = titulos[j], 
+       col = colores[j], 
+       xlab = "Pérdida", 
+       breaks = 30)
+  
+  for (i in 1:3) {
+    abline(v = VaRp[j + 4, i, 1], col = col_var[i], lwd = 2, lty = 2)
+  }
+  
+  legend("topleft", 
+         legend = c("VaR 95%", "VaR 97%", "VaR 99%"), 
+         col = col_var, lwd = 0.01, lty = 2, cex = 0.7)
+}
+```
+
+***- Portafolio***
+```{r}
+acciones <- rep(1000,n)
+
+d2 <- matrix(data = NA, nrow = m, ncol = n)
+
+for (j in 1:n) {
+  for (k in 1:m) {
+    d2[k,j] <- d1[k,j]*acciones[j]
+  }
+}
+
+q <- c()#Peso de cada emisora en el portafolio
+
+for (j in 1:n) {
+  q[j] <- d2[m,j]/sum(d2[m,])
+}
+
+c <- var(rend)
+cc <- cor(rend)
+
+corrplot(cc, 
+         method = "color",        # "circle", "square", "number", "shade", "color", "pie"
+         type = "upper",          # "full", "upper", "lower"
+         order = "hclust",        # "original", "AOE", "FPC", "hclust", "alphabet"
+         addCoef.col = "black",   # Añade valores numéricos (recomendado con method = "color" o "square")
+         tl.col = "black",        # Color de las etiquetas
+         tl.srt = 45,             # Rotación de etiquetas
+         diag = T,            # Oculta la diagonal si es redundante
+         col = colorRampPalette(c("blue", "white", "red"))(200),  # Escala de colores
+         number.cex = 0.7,        # Tamaño de los números si method = "number"
+         cl.cex = 0.7,            # Tamaño de la leyenda de colores
+         tl.cex = 0.8             # Tamaño de las etiquetas
+)
+```
+
+* Conlusiones:
+
+Correlaciones más fuertes (positivas):
+
+Tecnología:
+
+MSFT (2) y AAPL (1): 0.36 (moderada, menor de lo esperado para empresas tech).
+
+DELL (7) y BBY (5): 0.67 (alta, posiblemente por solapamiento en ventas de hardware).
+
+Consumo Discrecional:
+
+NKE (14) y LULU (12): 0.43 (moderada, ambas en ropa/deportes).
+
+ULTA (19) y WMT (20): 0.54 (alta, sorprendente para retail de cosméticos vs. supermercados).
+
+Correlaciones débiles o negativas:
+
+KO (3) (Coca-Cola) muestra correlaciones bajas con casi todo (ej. 0.11 con MSFT), típico de acciones defensivas.
+
+IRM (10) (almacenamiento) tiene correlaciones modestas (ej. 0.33 con JPM), reflejando su naturaleza aislada.
+
+Patrones inesperados:
+
+PSX (15) (energía) tiene correlación 0.44 con WMT (20) (retail), quizás por dinámicas inflacionarias.
+
+JPM (11) (banca) y KO (3): 0.51 (alta para sectores distintos, posiblemente por dividendos).
+
+```{r}
+q <- as.matrix(q)
+
+#Var(x) = q * Sigma * qT:q transpuesta
+varianza.port <- t(q) %*% c %*% q # Varianza del portafolio
+volatilidad.port <- sqrt(varianza.port)
+Var.port <- sum(d2[m,]) * f * volatilidad.port * sqrt(t)
+
+# VaR individual
+VaR.ind <- c()#Perdida Maxima de 1000 acciones en Pesos
+for (j in 1:n) {
+  VaR.ind[j] <- VaRp[j]*acciones[j]
+  
+}
+sum(VaR.ind)
+
+VaR.port <- matrix(NA, nrow = length(f), ncol = length(t))
+VaR.ind <- array(NA, dim = c(n, length(f), length(t)))
+
+for (i in 1:length(f)) {
+  for (k in 1:length(t)) {
+    # VaR portafolio
+    VaR.port[i, k] <- sum(d2[m,]) * f[i] * volatilidad.port * sqrt(t[k])
+    
+    # VaR individual
+    for (j in 1:n) {
+      VaR.ind[j, i, k] <- VaRp[j, i, k] * acciones[j]
+    }
+  }
+}
+# Para sumar el VaR individual por combinación de f y t
+suma_VaR_ind <- matrix(NA, nrow = length(f), ncol = length(t))
+for (i in 1:length(f)) {
+  for (k in 1:length(t)) {
+    suma_VaR_ind[i, k] <- sum(VaR.ind[, i, k])
+  }
+}
+print(VaR.port)
+```
+
+*Horizonte de tiempo de 1, 7, 15, 30, 60, 90, 180 dias, nivel de confianza del 95%, 95% y 99% **
+```{r}
+VaR.port
+```
+
+### Var Delta-Normal
+***-Individual***
+```{r}
+conf <- c(0.05, 0.03, 0.01)
+f <- qnorm(conf, 0, 1)
+t <- c(1, 7, 15, 30, 60, 90, 180)
+
+n <- 20               # Número de emisoras
+m <- nrow(d1)         # Número total de observaciones en d1
+acciones <- 1000
+
+# Creamos un array 3D: emisoras x niveles de confianza x plazos
+VaRDN <- array(NA, dim = c(n, length(f), length(t)),
+               dimnames = list(
+                 paste0("Emisora_", 1:n),
+                 paste0("Conf_", conf),
+                 paste0("T_", t)
+               ))
+
+for (j in 1:n) {
+  media <- mean(rend[, j], na.rm = TRUE)
+  vol <- sd(rend[, j], na.rm = TRUE)
+  precio_actual <- d1[m, j]
+
+  for (i in 1:length(f)) {
+    for (k in 1:length(t)) {
+      VaRDN[j, i, k] <- acciones * precio_actual * (media * t[k] + vol * f[i] * sqrt(t[k]))
+    }
+  }
+}
+
+# Son 7 tablas, una por cada horizonte de tiempo
+# Cada emisora tiene su var con los 3 respectivos niveles de confianza 
+
+head(VaRDN)
+```
+
+*Horizonte de tiempo de 1 dia, nivel de confianza del 95%, 95% y 99%
+```{r}
+VaRDN[,,1]
+```
+
+***- Portafolio***
+```{r}
+conf <- c(0.05, 0.03, 0.01)
+f <- qnorm(conf, 0, 1)
+t <- c(1, 7, 15, 30, 60, 90, 180)
+
+n <- 20               # Número de emisoras
+m <- nrow(d1)         # Número total de observaciones en d1
+acciones <- 1000
+vol_p <- volatilidad.port
+medias <- colMeans(rend, na.rm = TRUE)
+mu_p <- medias%*%q
+
+# Precio actual y valor total del portafolio
+precio_actual <- d1[m, 1:n]
+valor_portafolio <- sum(precio_actual * acciones)
+
+# Inicializar array de VaR del portafolio
+VaR_port <- matrix(NA, nrow = length(f), ncol = length(t),
+                   dimnames = list(paste0("Conf_", conf), paste0("T_", t)))
+
+# Calcular VaR del portafolio
+for (i in 1:length(f)) {
+  for (k in 1:length(t)) {
+    VaR_port[i, k] <- -valor_portafolio * (mu_p * t[k] + vol_p * f[i] * sqrt(t[k]))
+  }
+}
+# VaR_port
+```
+
+*Horizonte de tiempo de 1, 7, 15, 30, 60, 90, 180 dias, nivel de confianza del 95%, 95% y 99%
+```{r}
+VaR_port
+```
+
+
+### VaR por Expansion Cornish Fisher
+***- Individual***
+```{r}
+conf <- c(0.05, 0.03, 0.01)
+z <- qnorm(conf, 0, 1)
+t <- c(1, 7, 15, 30, 60, 90, 180)
+acciones <- 1000
+
+n <- 20
+m <- nrow(d1)
+
+# Array 3D para almacenar resultados
+VaR_CF <- array(NA, dim = c(n, length(conf), length(t)),
+                dimnames = list(
+                  paste0("Emisora_", 1:n),
+                  paste0("Conf_", conf),
+                  paste0("T_", t)
+                ))
+
+for (j in 1:n) {
+  rend_emi <- rend[, j]
+  media <- mean(rend_emi, na.rm = TRUE)
+  vol <- sd(rend_emi, na.rm = TRUE)
+  S <- skewness(rend_emi, na.rm = TRUE)
+  K <- kurtosis(rend_emi, na.rm = TRUE)
+  precio_actual <- d1[m, j]
+  
+  for (i in 1:length(z)) {
+    # Cálculo del w ajustado por Cornish-Fisher
+    w <- z[i] + (z[i]^2 - 1) * (S / 6) +
+         z[i] * (z[i]^2 - 3) * (K / 24) -
+         z[i] * (2 * z[i]^2 - 5) * (S^2 / 36)
+    
+    for (k in 1:length(t)) {
+      VaR_CF[j, i, k] <- -acciones * precio_actual * (media * t[k] + vol * w * sqrt(t[k]))
+    }
+  }
+}
+# VaR_C
+```
+
+*Horizonte de tiempo de 1 dia, nivel de confianza del 95%, 95% y 99%
+```{r}
+VaR_CF[,,1]
+```
+
+***- Portafolio***
+```{r}
+# Paso 1: pesos del portafolio
+acciones <- rep(1000, 20)
+valores <- d1[m, 1:20] * acciones
+w <- valores / sum(valores)  # pesos normalizados
+
+# Paso 2: rendimiento del portafolio
+rend_port <- rend %*% q  # vector de rendimientos del portafolio
+
+# Paso 3: momentos
+media <- mean(rend_port, na.rm = TRUE)
+vol <- sd(rend_port, na.rm = TRUE)
+S <- skewness(rend_port, na.rm = TRUE)
+K <- kurtosis(rend_port, na.rm = TRUE)
+
+# Paso 4: VaR Cornish-Fisher para el portafolio
+conf <- c(0.05, 0.03, 0.01)
+z <- qnorm(conf, 0, 1)
+t <- c(1, 7, 15, 30, 60, 90, 180)
+valor_portafolio <- sum(valores)
+
+VaR_CF_port <- matrix(NA, nrow = length(conf), ncol = length(t),
+                      dimnames = list(paste0("Conf_", conf),
+                                      paste0("T_", t)))
+
+for (i in 1:length(z)) {
+  w_cf <- z[i] + (z[i]^2 - 1) * (S / 6) +
+          z[i] * (z[i]^2 - 3) * (K / 24) -
+          z[i] * (2 * z[i]^2 - 5) * (S^2 / 36)
+  
+  for (j in 1:length(t)) {
+    VaR_CF_port[i, j] <- -valor_portafolio * (media * t[j] + vol * w_cf * sqrt(t[j]))
+  }
+}
+```
+
+*Horizonte de tiempo de 1, 7, 15, 30, 60, 90, 180 dias, nivel de confianza del 95%, 95% y 99% 
+```{r}
+VaR_CF_port
+```
+
+## VaR no paramétrico
+### VaR no paramétrico Simulación Bootstrapping
+***- Individual***
+```{r}
+set.seed(123)
+
+n <- 20
+m <- nrow(d1)
+acciones <- 1000
+nsim <- 5000
+
+t <- c(1, 7, 15, 30, 60, 90, 180)
+conf <- c(0.95, 0.97, 0.99)
+
+# Array para almacenar resultados: emisoras x confianza x plazo
+VaR_bootstrap_ind <- array(NA, dim = c(n, length(conf), length(t)),
+                           dimnames = list(
+                             paste0("Emisora_", 1:n),
+                             paste0("Conf_", conf),
+                             paste0("T_", t)
+                           ))
+
+for (j in 1:n) {
+  y <- rend[, j]
+  precio_actual <- d1[m, j]
+
+  for (k in 1:length(t)) {
+    pl_sim <- matrix(NA, nrow = nsim, ncol = length(conf))
+
+    for (i in 1:nsim) {
+      rend_sim <- sample(y, size = length(y), replace = TRUE)
+      reval <- precio_actual * (1 + rend_sim * sqrt(t[k]))  # Ajustamos por plazo
+      pl <- precio_actual - reval
+
+      for (c in 1:length(conf)) {
+        pl_sim[i, c] <- quantile(pl, conf[c], na.rm = TRUE) * acciones
+      }
+    }
+
+    VaR_bootstrap_ind[j, , k] <- colMeans(pl_sim, na.rm = TRUE)
+  }
+}
+
+# Mostrar un ejemplo de los resultados
+round(VaR_bootstrap_ind[, , "T_1"], 2)  # Para plazo de 1 día
+
+VaR_bootstrap_ind
+```
+
+***- Portafolio***
+
+```{r}
+set.seed(123)
+
+# Parámetros
+m <- 1000  # Simulaciones externas
+n <- 5000 # Simulaciones internas
+horizontes <- c(1, 7, 15, 30, 60, 90, 180)
+niveles_conf <- c(0.99, 0.97, 0.95)
+# Precio actual y valor total del portafolio
+acciones <- 1000
+#precio_actual <- d1[m, 1:n]
+valor_portafolio <- sum(precio_actual * acciones)
+
+
+rend_port <- rend %*% q 
+y <- rend_port  # Rendimientos diarios históricos
+
+# Inicializar matriz de resultados
+VaR_tabla <- matrix(NA, nrow = length(niveles_conf), ncol = length(horizontes))
+rownames(VaR_tabla) <- paste0("Conf_", niveles_conf * 100, "%")
+colnames(VaR_tabla) <- paste0("H", horizontes, "d")
+
+# Simulación bootstrap por combinación
+for (i in seq_along(niveles_conf)) {
+  conf <- niveles_conf[i]
+  
+  for (j in seq_along(horizontes)) {
+    h <- horizontes[j]
+    VaRLim <- numeric(m)  # Guardar los VaRs de cada simulación
+
+    for (s in 1:m) {
+      # Generar n rendimientos acumulados para el horizonte h
+      rend_sim <- replicate(n, sum(sample(y, h, replace = TRUE)))
+      
+      # Calcular pérdidas
+      reval <- valor_portafolio * (1 + rend_sim)
+      pl <- valor_portafolio - reval
+
+      # Guardar el VaR de esta simulación
+      VaRLim[s] <- quantile(pl, conf, na.rm = TRUE)
+    }
+
+    # Guardar promedio del VaR en la tabla
+    VaR_tabla[i, j] <- mean(VaRLim)
+  }
+}
+
+# Mostrar tabla final
+VaR_tabla
+```
+
+
